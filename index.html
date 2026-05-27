@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vaječný Deník 2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -22,6 +23,25 @@
         .toast-info { background: #0f172a; color: white; }
         .history-row { background-color: #f8fafc !important; }
         .history-row td { opacity: 0.55; }
+
+        /* Stats section collapse */
+        #stats-content {
+            overflow: hidden;
+            transition: max-height 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.35s ease;
+            max-height: 3000px;
+            opacity: 1;
+        }
+        #stats-content.stats-collapsed {
+            max-height: 0;
+            opacity: 0;
+        }
+        .stats-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .stats-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen pb-16">
@@ -98,6 +118,61 @@
                     <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">Tržba a Hodnota</p>
                     <p class="text-2xl font-black text-slate-800" id="card-kasa">0 Kč</p>
                     <span class="text-[10px] text-slate-500 font-medium" id="card-kasa-detail">Tržba: 0 Kč | Sklad: 0 Kč</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- GRAFY A STATISTIKY -->
+        <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <div class="flex items-center justify-between mb-1 cursor-pointer select-none" onclick="toggleStats()">
+                <h2 class="text-base font-extrabold text-slate-800 flex items-center gap-2">
+                    <span>📊</span> Statistiky a grafy
+                    <span class="text-[10px] font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full ml-1">celý rok 2026</span>
+                </h2>
+                <button id="stats-toggle-btn" class="text-xs font-bold text-slate-400 hover:text-slate-600 transition px-2 py-1 rounded-lg hover:bg-slate-100" aria-label="Přepnout statistiky">
+                    ▲ Skrýt
+                </button>
+            </div>
+            <div id="stats-content">
+                <div class="pt-4 grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+                    <!-- Sneseno po měsících — stacked bar -->
+                    <div class="stats-card lg:col-span-2 bg-gradient-to-br from-amber-50/60 to-white p-4 rounded-xl border border-amber-100">
+                        <h3 class="font-bold text-xs text-slate-600 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                            🥚 Sneseno po měsících
+                        </h3>
+                        <div style="height:220px; position:relative;">
+                            <canvas id="chart-monthly"></canvas>
+                        </div>
+                    </div>
+                    <!-- Aktuální sklad — donut -->
+                    <div class="stats-card bg-gradient-to-br from-emerald-50/60 to-white p-4 rounded-xl border border-emerald-100 flex flex-col">
+                        <h3 class="font-bold text-xs text-slate-600 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                            🏪 Aktuální sklad (ostré)
+                        </h3>
+                        <div style="height:220px; position:relative; flex:1;">
+                            <canvas id="chart-donut"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <!-- Prodáno po měsících — stacked bar -->
+                    <div class="stats-card bg-gradient-to-br from-blue-50/50 to-white p-4 rounded-xl border border-blue-100">
+                        <h3 class="font-bold text-xs text-slate-600 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                            📦 Prodáno po měsících
+                        </h3>
+                        <div style="height:180px; position:relative;">
+                            <canvas id="chart-sold"></canvas>
+                        </div>
+                    </div>
+                    <!-- Tržby — line/area chart -->
+                    <div class="stats-card bg-gradient-to-br from-purple-50/50 to-white p-4 rounded-xl border border-purple-100">
+                        <h3 class="font-bold text-xs text-slate-600 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                            💰 Tržby po měsících
+                        </h3>
+                        <div style="height:180px; position:relative;">
+                            <canvas id="chart-revenue"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -1013,6 +1088,9 @@ function updateUI() {
         `;
         tbody.appendChild(tr);
     });
+
+    // Grafy aktualizovat po vyrendrování tabulky
+    updateCharts();
 }
 
 // ============================================================
@@ -1277,6 +1355,296 @@ function downloadBlob(content, filename, mime) {
 }
 
 // ============================================================
+// GRAFY (Chart.js)
+// ============================================================
+
+let _chartMonthly = null;
+let _chartDonut   = null;
+let _chartSold    = null;
+let _chartRevenue = null;
+let _statsVisible = true;
+
+function toggleStats() {
+    _statsVisible = !_statsVisible;
+    const content = document.getElementById('stats-content');
+    const btn = document.getElementById('stats-toggle-btn');
+    if (_statsVisible) {
+        content.classList.remove('stats-collapsed');
+        btn.textContent = '▲ Skrýt';
+        setTimeout(updateCharts, 60);
+    } else {
+        content.classList.add('stats-collapsed');
+        btn.textContent = '▼ Zobrazit';
+    }
+}
+
+function _destroyChart(ch) { if (ch) ch.destroy(); return null; }
+
+function updateCharts() {
+    if (!_statsVisible) return;
+    if (typeof Chart === 'undefined') return;
+    if (!records.length) return;
+
+    const allCalc = calculateBalances(records, settings.initialStock);
+    const prices  = settings.prices;
+
+    // Agregace po měsících
+    const monthMap = {};
+    for (const r of allCalc) {
+        const mo = r.date.substring(0, 7);
+        if (!monthMap[mo]) monthMap[mo] = {
+            sneseno: { slep: 0, zel: 0, krep: 0 },
+            prodano: { slep: 0, zel: 0, krep: 0 },
+            revenue: 0
+        };
+        const m = monthMap[mo];
+        m.sneseno.slep += r.slepM + r.slepV;
+        m.sneseno.zel  += r.zelM  + r.zelV;
+        m.sneseno.krep += r.krep;
+        m.prodano.slep += r.sold_slepM + r.sold_slepV;
+        m.prodano.zel  += r.sold_zelM  + r.sold_zelV;
+        m.prodano.krep += r.sold_krep;
+        m.revenue      += dailyRevenue(r, prices);
+    }
+    const sortedMo = Object.keys(monthMap).sort();
+    const labels   = sortedMo.map(m => MONTH_NAMES[parseInt(m.split('-')[1]) - 1]);
+
+    const CHART_DEFAULTS = {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 600, easing: 'easeOutQuart' },
+        plugins: { legend: { labels: { font: { family: "'Plus Jakarta Sans', sans-serif", size: 11 }, padding: 10 } } }
+    };
+
+    // Chart 1 — Sneseno stacked bar
+    _chartMonthly = _destroyChart(_chartMonthly);
+    const ctxM = document.getElementById('chart-monthly');
+    if (ctxM) {
+        _chartMonthly = new Chart(ctxM, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'Slepičí', data: sortedMo.map(m => monthMap[m].sneseno.slep), backgroundColor: '#f59e0b', borderRadius: 3, stack: 's' },
+                    { label: 'Zelená',  data: sortedMo.map(m => monthMap[m].sneseno.zel),  backgroundColor: '#10b981', borderRadius: 3, stack: 's' },
+                    { label: 'Křepelčí',data: sortedMo.map(m => monthMap[m].sneseno.krep), backgroundColor: '#818cf8', borderRadius: 3, stack: 's' }
+                ]
+            },
+            options: {
+                ...CHART_DEFAULTS,
+                plugins: { ...CHART_DEFAULTS.plugins, legend: { ...CHART_DEFAULTS.plugins.legend, position: 'bottom' }, tooltip: { mode: 'index' } },
+                scales: {
+                    x: { stacked: true, grid: { display: false }, ticks: { font: { size: 10 } } },
+                    y: { stacked: true, beginAtZero: true, ticks: { font: { size: 10 } } }
+                }
+            }
+        });
+    }
+
+    // Chart 2 — Aktuální sklad donut
+    _chartDonut = _destroyChart(_chartDonut);
+    const ctxD = document.getElementById('chart-donut');
+    if (ctxD) {
+        const cutoff      = settings.historyCutoff || '';
+        const cutoffStock = settings.cutoffStock || settings.initialStock;
+        const activeRecs  = cutoff ? records.filter(r => r.date > cutoff) : records;
+        const activeCalc  = calculateBalances(activeRecs, cutoffStock);
+        const lr = activeCalc[activeCalc.length - 1] || {
+            bal_slepM: cutoffStock.slepM, bal_slepV: cutoffStock.slepV,
+            bal_zelM:  cutoffStock.zelM,  bal_zelV:  cutoffStock.zelV,
+            bal_krep:  cutoffStock.krep
+        };
+        const vals = [lr.bal_slepM, lr.bal_slepV, lr.bal_zelM, lr.bal_zelV, lr.bal_krep].map(v => Math.max(0, v));
+        const total = vals.reduce((a, b) => a + b, 0);
+        _chartDonut = new Chart(ctxD, {
+            type: 'doughnut',
+            data: {
+                labels: ['Slep M', 'Slep V', 'Zel M', 'Zel V', 'Křepelčí'],
+                datasets: [{ data: vals, backgroundColor: ['#fbbf24','#f59e0b','#34d399','#10b981','#818cf8'], borderWidth: 2, borderColor: '#fff', hoverOffset: 10 }]
+            },
+            options: {
+                ...CHART_DEFAULTS,
+                cutout: '68%',
+                plugins: {
+                    ...CHART_DEFAULTS.plugins,
+                    legend: { ...CHART_DEFAULTS.plugins.legend, position: 'bottom' },
+                    tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw} ks` } }
+                },
+                // Středový text – celkový počet
+                afterDraw: undefined
+            },
+            plugins: [{
+                id: 'centerText',
+                afterDraw(chart) {
+                    const { width, height, ctx: c } = chart;
+                    c.save();
+                    c.font = `800 ${Math.round(height / 8)}px 'Plus Jakarta Sans', sans-serif`;
+                    c.fillStyle = '#1e293b';
+                    c.textAlign = 'center';
+                    c.textBaseline = 'middle';
+                    c.fillText(total + ' ks', width / 2, height / 2 - 10);
+                    c.font = `500 ${Math.round(height / 14)}px 'Plus Jakarta Sans', sans-serif`;
+                    c.fillStyle = '#94a3b8';
+                    c.fillText('celkem', width / 2, height / 2 + Math.round(height / 8) - 4);
+                    c.restore();
+                }
+            }]
+        });
+    }
+
+    // Chart 3 — Prodáno stacked bar
+    _chartSold = _destroyChart(_chartSold);
+    const ctxS = document.getElementById('chart-sold');
+    if (ctxS) {
+        _chartSold = new Chart(ctxS, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'Slepičí', data: sortedMo.map(m => monthMap[m].prodano.slep), backgroundColor: '#93c5fd', borderRadius: 3, stack: 'p' },
+                    { label: 'Zelená',  data: sortedMo.map(m => monthMap[m].prodano.zel),  backgroundColor: '#6ee7b7', borderRadius: 3, stack: 'p' },
+                    { label: 'Křepelčí',data: sortedMo.map(m => monthMap[m].prodano.krep), backgroundColor: '#c4b5fd', borderRadius: 3, stack: 'p' }
+                ]
+            },
+            options: {
+                ...CHART_DEFAULTS,
+                plugins: { ...CHART_DEFAULTS.plugins, legend: { ...CHART_DEFAULTS.plugins.legend, position: 'bottom' }, tooltip: { mode: 'index' } },
+                scales: {
+                    x: { stacked: true, grid: { display: false }, ticks: { font: { size: 10 } } },
+                    y: { stacked: true, beginAtZero: true, ticks: { font: { size: 10 } } }
+                }
+            }
+        });
+    }
+
+    // Chart 4 — Tržby area line
+    _chartRevenue = _destroyChart(_chartRevenue);
+    const ctxR = document.getElementById('chart-revenue');
+    if (ctxR) {
+        _chartRevenue = new Chart(ctxR, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Tržba (Kč)',
+                    data: sortedMo.map(m => Math.round(monthMap[m].revenue)),
+                    borderColor: '#8b5cf6',
+                    backgroundColor: 'rgba(139,92,246,0.12)',
+                    fill: true,
+                    tension: 0.45,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#8b5cf6',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    borderWidth: 2.5
+                }]
+            },
+            options: {
+                ...CHART_DEFAULTS,
+                plugins: {
+                    ...CHART_DEFAULTS.plugins,
+                    legend: { ...CHART_DEFAULTS.plugins.legend, position: 'bottom' },
+                    tooltip: { callbacks: { label: ctx => `Tržba: ${ctx.raw.toLocaleString('cs-CZ')} Kč` } }
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+                    y: { beginAtZero: true, ticks: { font: { size: 10 }, callback: v => v.toLocaleString('cs-CZ') + ' Kč' } }
+                }
+            }
+        });
+    }
+}
+
+// ============================================================
+// ZVÍŘÁTKA 🐔🐓🥚  — requestAnimationFrame animace
+// ============================================================
+
+function _spawnCritter() {
+    const options = [
+        { e: '🐔', label: 'slepice' },
+        { e: '🐓', label: 'kohout'  },
+        { e: '🐣', label: 'kuřátko' }
+    ];
+    const { e } = options[Math.floor(Math.random() * options.length)];
+    const goRight = Math.random() > 0.4;
+    const size    = 2.2 + Math.random() * 0.7;
+    const speed   = 180 + Math.random() * 160;
+    const bottomBase = 6 + Math.floor(Math.random() * 16);
+
+    const el = document.createElement('div');
+    el.textContent = e;
+    el.style.cssText = `position:fixed;bottom:${bottomBase}px;font-size:${size}rem;z-index:9999;pointer-events:none;user-select:none;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.18));will-change:transform,left,right,bottom;`;
+    if (goRight) { el.style.left = '-90px'; }
+    else         { el.style.right = '-90px'; el.style.transform = 'scaleX(-1)'; }
+    document.body.appendChild(el);
+
+    const vw = window.innerWidth + 180;
+    let pos = 0, last = null;
+
+    const tick = ts => {
+        if (!last) last = ts;
+        const dt = Math.min((ts - last) / 1000, 0.1);
+        last = ts;
+        pos += speed * dt;
+        const bounce = Math.abs(Math.sin(pos / 28)) * 9;
+        const sq = 1 + Math.abs(Math.sin(pos / 14)) * 0.12;
+        if (goRight) { el.style.left = `${pos - 90}px`; el.style.transform = `scaleX(${sq}) scaleY(${1/sq})`; }
+        else         { el.style.right = `${pos - 90}px`; el.style.transform = `scaleX(${-sq}) scaleY(${1/sq})`; }
+        el.style.bottom = `${bottomBase + bounce}px`;
+        if (pos < vw) requestAnimationFrame(tick);
+        else el.remove();
+    };
+    requestAnimationFrame(tick);
+}
+
+function _spawnEgg() {
+    const el = document.createElement('div');
+    el.textContent = '🥚';
+    const startX = 40 + Math.random() * (window.innerWidth - 80);
+    const size   = 1.6 + Math.random() * 0.8;
+    const speed  = 260 + Math.random() * 180;
+    el.style.cssText = `position:fixed;top:-60px;left:${startX}px;font-size:${size}rem;z-index:9999;pointer-events:none;user-select:none;will-change:transform,top;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.15));`;
+    document.body.appendChild(el);
+
+    let posY = -60, rotation = 0, wobbleX = startX, last = null;
+    const maxY = window.innerHeight + 80;
+
+    const tick = ts => {
+        if (!last) last = ts;
+        const dt = Math.min((ts - last) / 1000, 0.1);
+        last = ts;
+        posY  += speed * dt;
+        rotation += 200 * dt;
+        wobbleX  += Math.sin(posY / 35) * 0.6;
+        const fade = posY > maxY * 0.65 ? Math.max(0, 1 - (posY - maxY * 0.65) / (maxY * 0.35)) : 1;
+        el.style.top = `${posY}px`;
+        el.style.left = `${wobbleX}px`;
+        el.style.transform = `rotate(${rotation}deg)`;
+        el.style.opacity = fade;
+        if (posY < maxY && fade > 0) requestAnimationFrame(tick);
+        else el.remove();
+    };
+    requestAnimationFrame(tick);
+}
+
+function _scheduleAnimation() {
+    const delay = 20000 + Math.random() * 28000; // 20–48 s
+    setTimeout(() => {
+        const roll = Math.random();
+        if (roll < 0.48) {
+            _spawnCritter();
+        } else if (roll < 0.72) {
+            _spawnEgg();
+        } else {
+            // double event — zvíře + vajíčko
+            _spawnCritter();
+            setTimeout(_spawnEgg, 600 + Math.random() * 1200);
+        }
+        _scheduleAnimation();
+    }, delay);
+}
+
+// ============================================================
 // INIT
 // ============================================================
 
@@ -1287,6 +1655,8 @@ window.addEventListener('DOMContentLoaded', () => {
     renderMonthFilters();
     updateUI();
     if (getCloudKey()) updateSyncIndicator('synced');
+    // Spustit plánování zvířátek po 5 s (ať to neruší načítání)
+    setTimeout(_scheduleAnimation, 5000);
 });
 
 // Expose pro inline onclick
@@ -1306,6 +1676,7 @@ window.manualSync = manualSync;
 window.manualRestore = manualRestore;
 window.updateUI = updateUI;
 window.recalcCutoffStock = recalcCutoffStock;
+window.toggleStats = toggleStats;
 
 </script>
 </body>
