@@ -74,6 +74,13 @@
 
     <main class="max-w-7xl mx-auto px-4 mt-6 space-y-6">
 
+        <!-- CLOUD SETUP BANNER (zobrazí se, pokud není nastaven ACCESS_KEY) -->
+        <div id="cloud-setup-banner" class="hidden px-5 py-3 bg-amber-50 border border-amber-200 rounded-2xl flex flex-wrap items-center gap-3 text-sm text-amber-900 shadow-sm">
+            <span class="flex-1 min-w-0">☁️ <strong>Cloud sync není nastaven</strong> — bez přístupového klíče se data ukládají jen lokálně v tomto prohlížeči.</span>
+            <button onclick="openSettings()" class="shrink-0 bg-amber-700 hover:bg-amber-800 text-white font-bold py-1.5 px-4 rounded-xl text-xs transition">Nastavit teď</button>
+            <button onclick="dismissSetupBanner()" class="shrink-0 text-amber-500 hover:text-amber-800 font-bold text-lg leading-none px-1" aria-label="Zavřít">×</button>
+        </div>
+
         <!-- STATISTIKY (KARTY) -->
         <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <!-- Celkem sneseno -->
@@ -469,6 +476,7 @@
 const STORAGE_KEY = 'egg_tracker_v4_data';
 const SETTINGS_KEY = 'egg_tracker_v4_settings';
 const CLOUD_KEY_STORAGE = 'egg_tracker_v4_cloud_key';
+const SYNC_TIMESTAMP_KEY = 'egg_tracker_v4_sync_at'; // timestamp posledního úspěšného cloud sync
 
 const DEFAULT_SETTINGS = {
     prices: { slepM: 4.5, slepV: 5.5, zelM: 6.0, zelV: 6.5, krep: 3.0 },
@@ -865,13 +873,15 @@ async function cloudSync() {
     const key = getCloudKey();
     if (!key) return;
     try {
+        const savedAt = new Date().toISOString();
         const res = await fetch(`/api/data?key=${encodeURIComponent(key)}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ records, settings, savedAt: new Date().toISOString() })
+            body: JSON.stringify({ records, settings, savedAt })
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         updateSyncIndicator('synced');
+        safeSet(SYNC_TIMESTAMP_KEY, savedAt);
     } catch (e) {
         updateSyncIndicator('error');
         console.error('Cloud sync error:', e);
@@ -907,12 +917,75 @@ async function cloudRestore() {
         }
         safeSet(STORAGE_KEY, JSON.stringify(records));
         safeSet(SETTINGS_KEY, JSON.stringify(settings));
+        safeSet(SYNC_TIMESTAMP_KEY, json.data.savedAt || new Date().toISOString());
         updateUI();
         renderMonthFilters();
         showToast('Data úspěšně načtena z cloudu', 'success');
     } catch (e) {
         showToast('Chyba při načítání: ' + e.message, 'error');
     }
+}
+
+async function autoSyncOnStartup() {
+    const key = getCloudKey();
+    if (!key) { _showSetupBanner(); return; }
+
+    try {
+        updateSyncIndicator('pending');
+        const res = await fetch(`/api/data?key=${encodeURIComponent(key)}`);
+        if (!res.ok) { updateSyncIndicator('error'); return; }
+        const json = await res.json();
+
+        if (!json.data || !(json.data.records?.length)) {
+            // Cloud prázdný → push lokálních dat (první spuštění na novém deploymentu)
+            await cloudSync();
+            return;
+        }
+
+        const cloudTs = json.data.savedAt;
+        const localTs = safeGet(SYNC_TIMESTAMP_KEY);
+        const isFresh = !safeGet(STORAGE_KEY); // nový prohlížeč, ještě nebylo nic uloženo
+
+        if (isFresh || (cloudTs && (!localTs || cloudTs > localTs))) {
+            // Cloud má novější data → auto-pull (tiše, bez confirm)
+            records = (json.data.records || []).map(migrateRecord);
+            if (json.data.settings) {
+                settings = {
+                    prices:        { ...DEFAULT_SETTINGS.prices,       ...(json.data.settings.prices       || {}) },
+                    initialStock:  { ...DEFAULT_SETTINGS.initialStock, ...(json.data.settings.initialStock  || {}) },
+                    historyCutoff: json.data.settings.historyCutoff ?? DEFAULT_SETTINGS.historyCutoff,
+                    cutoffStock:   json.data.settings.cutoffStock   ?? null
+                };
+                if (settings.historyCutoff && !settings.cutoffStock) {
+                    settings.cutoffStock = computeStockAtDate(records, settings.initialStock, settings.historyCutoff);
+                }
+            }
+            safeSet(STORAGE_KEY,        JSON.stringify(records));
+            safeSet(SETTINGS_KEY,       JSON.stringify(settings));
+            safeSet(SYNC_TIMESTAMP_KEY, cloudTs || new Date().toISOString());
+            updateUI();
+            renderMonthFilters();
+            updateSyncIndicator('synced');
+            if (!isFresh) showToast('☁️ Načtena novější data z cloudu', 'info');
+        } else {
+            // Lokální data jsou aktuální nebo novější → push do cloudu (fire-and-forget)
+            updateSyncIndicator('synced');
+            cloudSync();
+        }
+    } catch (e) {
+        updateSyncIndicator('error');
+        console.warn('Auto-sync startup failed:', e.message);
+    }
+}
+
+function _showSetupBanner() {
+    const b = document.getElementById('cloud-setup-banner');
+    if (b) b.classList.remove('hidden');
+}
+
+function dismissSetupBanner() {
+    const b = document.getElementById('cloud-setup-banner');
+    if (b) b.classList.add('hidden');
 }
 
 function manualSync() {
@@ -1654,8 +1727,9 @@ window.addEventListener('DOMContentLoaded', () => {
     if (formDate) formDate.value = new Date().toISOString().split('T')[0];
     renderMonthFilters();
     updateUI();
-    if (getCloudKey()) updateSyncIndicator('synced');
-    // Spustit plánování zvířátek po 5 s (ať to neruší načítání)
+    // Non-blocking auto-sync: porovná cloud vs. localStorage, stáhne pokud cloud novější
+    autoSyncOnStartup();
+    // Zvířátka spustit až po 5 s (ať neruší první render)
     setTimeout(_scheduleAnimation, 5000);
 });
 
@@ -1677,6 +1751,7 @@ window.manualRestore = manualRestore;
 window.updateUI = updateUI;
 window.recalcCutoffStock = recalcCutoffStock;
 window.toggleStats = toggleStats;
+window.dismissSetupBanner = dismissSetupBanner;
 
 </script>
 </body>
