@@ -673,7 +673,14 @@ function migrateRecord(r) {
     };
 }
 
-const SEED_RECORDS = SEED_RECORDS_OLD.map(migrateRecord);
+const SEED_RECORDS = [
+    ...SEED_RECORDS_OLD.map(migrateRecord),
+    // Ostrá evidence od 25.5.2026 (přepsáno z papíru, zadáno ručně)
+    { date: '2026-05-25', slepM: 4, slepV: 18, zelM: 4, zelV: 0, krep: 1,
+      sold_slepM: 0, sold_slepV: 5, sold_zelM: 9, sold_zelV: 0, sold_krep: 0 },
+    { date: '2026-05-26', slepM: 0, slepV: 20, zelM: 3, zelV: 0, krep: 1,
+      sold_slepM: 0, sold_slepV: 0, sold_zelM: 0, sold_zelV: 0, sold_krep: 0 }
+];
 
 // ============================================================
 // STORAGE
