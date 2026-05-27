@@ -1,0 +1,16 @@
+{
+  "name": "vajecny-denik",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Evidence snášky a prodeje vajec - Nech mě růst",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "@vercel/kv": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

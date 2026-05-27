@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vaječný Deník 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .weekend-row { background-color: #fef3c7 !important; }
+        .negative-balance { color: #b91c1c; font-weight: 800; }
+        .toast {
+            position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+            padding: 0.75rem 1.5rem; border-radius: 0.75rem; box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            font-weight: 600; font-size: 0.875rem; z-index: 60;
+            opacity: 0; transition: opacity 0.3s ease;
+        }
+        .toast.show { opacity: 1; }
+        .toast-success { background: #10b981; color: white; }
+        .toast-error { background: #dc2626; color: white; }
+        .toast-info { background: #0f172a; color: white; }
+        .history-row { background-color: #f8fafc !important; }
+        .history-row td { opacity: 0.55; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen pb-16">
+
+    <!-- HLAVIČKA -->
+    <header class="bg-gradient-to-r from-amber-700 to-amber-950 text-white shadow-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white p-2.5 rounded-full text-amber-800 shadow-inner flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 text-amber-600">
+                        <path d="M12 2C8.69 2 6 7.37 6 12s2.69 10 6 10 6-5.37 6-10-2.69-10-6-10z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black leading-none tracking-tight">Vaječný Deník 2026</h1>
+                    <span class="text-xs text-amber-200 font-medium">Digitalizace chovatelské evidence</span>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <span id="sync-indicator" class="text-[10px] text-amber-200 font-bold flex items-center gap-1.5 mr-1" title="Stav cloud zálohy">
+                    <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                    <span id="sync-status-text">offline</span>
+                </span>
+                <button onclick="openSettings()" class="bg-amber-800/80 hover:bg-amber-800 text-white px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">Nastavení</button>
+                <button onclick="exportToCSV()" class="bg-amber-800/80 hover:bg-amber-800 text-white px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">Stáhnout CSV</button>
+                <button onclick="openAddModal()" class="bg-white hover:bg-amber-50 text-amber-900 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition">Zapsat nový den</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 mt-6 space-y-6">
+
+        <!-- STATISTIKY (KARTY) -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Celkem sneseno -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center space-x-4">
+                <div class="p-3 bg-amber-100 text-amber-700 rounded-xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18m9-9H3" /></svg>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">Celkem Sneseno</p>
+                    <p class="text-2xl font-black text-slate-800" id="card-sneseno">0 ks</p>
+                    <span class="text-[10px] text-slate-500 font-medium" id="card-sneseno-detail">Slep: 0 | Zel: 0 | Křep: 0</span>
+                </div>
+            </div>
+            <!-- Celkem prodáno -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center space-x-4">
+                <div class="p-3 bg-blue-100 text-blue-700 rounded-xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" /></svg>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">Celkem Prodáno</p>
+                    <p class="text-2xl font-black text-slate-800" id="card-prodano">0 ks</p>
+                    <span class="text-[10px] text-slate-500 font-medium" id="card-prodano-detail">Slep: 0 | Zel: 0 | Křep: 0</span>
+                </div>
+            </div>
+            <!-- Sklad -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center space-x-4">
+                <div class="p-3 bg-emerald-100 text-emerald-700 rounded-xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h5.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18" /></svg>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">Aktuální Sklad</p>
+                    <p class="text-2xl font-black text-slate-800" id="card-sklad">0 ks</p>
+                    <span class="text-[10px] text-slate-500 font-medium" id="card-sklad-detail">Slep: 0 | Zel: 0 | Křep: 0</span>
+                </div>
+            </div>
+            <!-- Tržba & Hodnota -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center space-x-4">
+                <div class="p-3 bg-purple-100 text-purple-700 rounded-xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" /></svg>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">Tržba a Hodnota</p>
+                    <p class="text-2xl font-black text-slate-800" id="card-kasa">0 Kč</p>
+                    <span class="text-[10px] text-slate-500 font-medium" id="card-kasa-detail">Tržba: 0 Kč | Sklad: 0 Kč</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- FILTRY -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <div class="flex items-center justify-between mb-3 border-b pb-1.5">
+                <h3 class="font-bold text-slate-800 text-sm">Filtrování měsíců</h3>
+                <span class="text-xs text-slate-400 font-bold" id="filter-count">Zobrazeno: 0 dní</span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2" id="month-filter-buttons">
+                <!-- Generováno JS -->
+            </div>
+            <div class="mt-4 flex flex-col sm:flex-row gap-4 items-center justify-between bg-slate-50 p-3 rounded-xl">
+                <div class="relative w-full sm:w-72">
+                    <input type="text" id="search-input" oninput="updateUI()" placeholder="Vyhledat datum v tabulce..." class="w-full bg-white border border-slate-200 rounded-lg pl-3 pr-3 py-1.5 text-xs focus:outline-none font-medium">
+                </div>
+                <div class="text-[11px] text-slate-500 font-semibold">
+                    <span class="w-2.5 h-2.5 bg-amber-200 border border-amber-400 rounded-sm inline-block mr-1"></span>
+                    Podbarvené řádky jsou víkendy
+                    <span class="ml-3 negative-balance">červené čísla</span> = záporný zůstatek
+                </div>
+            </div>
+        </div>
+
+        <!-- HLAVNÍ TABULKA -->
+        <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <h2 class="text-base font-extrabold text-slate-800 mb-3 flex items-center gap-2">Evidenční sešit 2026</h2>
+            <div id="cutoff-banner" class="mb-3 px-4 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-500 flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span>📜 <strong class="text-slate-600">Historie</strong> do <span id="banner-cutoff-date" class="font-semibold text-slate-600"></span> (orientační)</span>
+                <span class="text-slate-300 hidden sm:inline">|</span>
+                <span>⚡ <strong class="text-slate-600">Ostrá evidence</strong> od <span id="banner-active-from" class="font-semibold text-slate-600"></span></span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse min-w-[1100px]">
+                    <thead>
+                        <tr class="border-b border-slate-200 text-slate-400 text-[10px] font-extrabold uppercase tracking-wider bg-slate-50">
+                            <th class="py-3 px-4">Datum</th>
+                            <th class="py-3 px-2 text-center bg-amber-50/40 border-r border-slate-100" colspan="3">Sneseno</th>
+                            <th class="py-3 px-2 text-center bg-blue-50/20 border-r border-slate-100" colspan="3">Prodáno</th>
+                            <th class="py-3 px-2 text-center bg-emerald-50/20 border-r border-slate-100" colspan="3">Zůstatek</th>
+                            <th class="py-3 px-2 text-center bg-purple-50/30" colspan="2">Tržba a Hodnota</th>
+                            <th class="py-3 px-4 text-center">Akce</th>
+                        </tr>
+                        <tr class="border-b border-slate-200 text-slate-500 text-[9px] font-extrabold uppercase bg-slate-100/50">
+                            <th class="py-1 px-4"></th>
+                            <th class="py-1 px-2 text-center bg-amber-50/40">Slep (M / V)</th>
+                            <th class="py-1 px-2 text-center bg-amber-50/40">Zelená (M / V)</th>
+                            <th class="py-1 px-2 text-center bg-amber-50/40 border-r border-slate-100">Křepelčí</th>
+                            <th class="py-1 px-2 text-center bg-blue-50/20">Slep (M / V)</th>
+                            <th class="py-1 px-2 text-center bg-blue-50/20">Zelená (M / V)</th>
+                            <th class="py-1 px-2 text-center bg-blue-50/20 border-r border-slate-100">Křepelčí</th>
+                            <th class="py-1 px-2 text-center bg-emerald-50/10">Slep (M / V)</th>
+                            <th class="py-1 px-2 text-center bg-emerald-50/10">Zelená (M / V)</th>
+                            <th class="py-1 px-2 text-center bg-emerald-50/10 border-r border-slate-100">Křepelčí</th>
+                            <th class="py-1 px-2 text-center bg-purple-50/20">Tržba dne</th>
+                            <th class="py-1 px-2 text-center bg-purple-50/20">Hodnota skladu</th>
+                            <th class="py-1 px-4 text-center"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="diary-table-body" class="divide-y divide-slate-100 text-xs">
+                        <!-- Generováno JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- MODAL: ZÁZNAM -->
+    <div id="record-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="bg-amber-800 text-white p-5 flex justify-between items-center">
+                <h3 class="font-bold text-lg" id="modal-title">Zapsat nový den</h3>
+                <button onclick="closeAddModal()" class="text-white font-bold text-xl leading-none px-2">×</button>
+            </div>
+            <form id="record-form" class="p-6 space-y-6" onsubmit="handleFormSubmit(event)">
+                <input type="hidden" id="edit-original-date">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">Datum</label>
+                    <input type="date" id="form-date" required class="w-full border rounded-xl p-2.5 font-semibold text-slate-800">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <!-- SNESENO -->
+                    <div class="bg-amber-50/40 p-4 rounded-xl border border-amber-100 space-y-3">
+                        <h4 class="font-extrabold text-xs text-amber-900 uppercase tracking-wider">Sneseno</h4>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500">Slepičí Malá</label>
+                                <input type="number" id="form-slepM" min="0" value="0" class="w-full border rounded-lg p-2 font-bold text-center">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500">Slepičí Velká</label>
+                                <input type="number" id="form-slepV" min="0" value="0" class="w-full border rounded-lg p-2 font-bold text-center">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500">Zelená Malá</label>
+                                <input type="number" id="form-zelM" min="0" value="0" class="w-full border rounded-lg p-2 font-bold text-center">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500">Zelená Velká</label>
+                                <input type="number" id="form-zelV" min="0" value="0" class="w-full border rounded-lg p-2 font-bold text-center">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 block mb-0.5">Křepelčí</label>
+                            <input type="number" id="form-krep" min="0" value="0" class="w-full border rounded-lg p-2 font-bold text-center">
+                        </div>
+                    </div>
+                    <!-- PRODÁNO -->
+                    <div class="bg-blue-50/30 p-4 rounded-xl border border-blue-100 space-y-3">
+                        <h4 class="font-extrabold text-xs text-blue-900 uppercase tracking-wider">Prodáno</h4>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500">Slepičí Malá</label>
+                                <input type="number" id="form-sold_slepM" min="0" value="0" class="w-full border rounded-lg p-2 font-bold text-center">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500">Slepičí Velká</label>
+                                <input type="number" id="form-sold_slepV" min="0" value="0" class="w-full border rounded-lg p-2 font-bold text-center">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500">Zelená Malá</label>
+                                <input type="number" id="form-sold_zelM" min="0" value="0" class="w-full border rounded-lg p-2 font-bold text-center">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500">Zelená Velká</label>
+                                <input type="number" id="form-sold_zelV" min="0" value="0" class="w-full border rounded-lg p-2 font-bold text-center">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 block mb-0.5">Křepelčí</label>
+                            <input type="number" id="form-sold_krep" min="0" value="0" class="w-full border rounded-lg p-2 font-bold text-center">
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-4 border-t">
+                    <button type="button" onclick="closeAddModal()" class="px-4 py-2 border rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-50">Zrušit</button>
+                    <button type="submit" class="px-5 py-2 bg-amber-800 hover:bg-amber-950 text-white font-bold rounded-xl text-xs">Uložit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: NASTAVENÍ -->
+    <div id="settings-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-white rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="bg-slate-800 text-white p-5 flex justify-between items-center">
+                <h3 class="font-bold text-lg">Nastavení</h3>
+                <button onclick="closeSettings()" class="text-white font-bold text-xl leading-none px-2">×</button>
+            </div>
+            <div class="p-6 space-y-6">
+
+                <!-- CENY -->
+                <div>
+                    <h4 class="font-extrabold text-sm text-slate-800 uppercase tracking-wider mb-3 border-b pb-1.5">Orientační ceny (Kč/ks)</h4>
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400">Slep M</label>
+                            <input type="number" step="0.1" id="set-price-slepM" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400">Slep V</label>
+                            <input type="number" step="0.1" id="set-price-slepV" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400">Zelená M</label>
+                            <input type="number" step="0.1" id="set-price-zelM" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400">Zelená V</label>
+                            <input type="number" step="0.1" id="set-price-zelV" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400">Křepelčí</label>
+                            <input type="number" step="0.1" id="set-price-krep" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- POČÁTEČNÍ STAV -->
+                <div>
+                    <h4 class="font-extrabold text-sm text-slate-800 uppercase tracking-wider mb-3 border-b pb-1.5">Počáteční stav skladu (k 31.12.2025)</h4>
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400">Slep M</label>
+                            <input type="number" id="set-init-slepM" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400">Slep V</label>
+                            <input type="number" id="set-init-slepV" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400">Zelená M</label>
+                            <input type="number" id="set-init-zelM" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400">Zelená V</label>
+                            <input type="number" id="set-init-zelV" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400">Křepelčí</label>
+                            <input type="number" id="set-init-krep" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- UZÁVĚRKA HISTORIE -->
+                <div>
+                    <h4 class="font-extrabold text-sm text-slate-800 uppercase tracking-wider mb-3 border-b pb-1.5">Uzávěrka historie</h4>
+                    <p class="text-xs text-slate-500 mb-3">
+                        Záznamy do tohoto data jsou orientační (přepsány z papíru) a nevstupují do statistik ani do validace záporných zůstatků.
+                    </p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Datum uzávěrky (včetně)</label>
+                            <input type="date" id="set-cutoff-date" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
+                        </div>
+                    </div>
+                    <p class="text-[10px] uppercase font-bold text-slate-400 mb-2">Stav skladu k ránu prvního ostrého dne</p>
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-3">
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400">Slep M</label>
+                            <input type="number" id="set-cutoff-slepM" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400">Slep V</label>
+                            <input type="number" id="set-cutoff-slepV" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400">Zelená M</label>
+                            <input type="number" id="set-cutoff-zelM" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400">Zelená V</label>
+                            <input type="number" id="set-cutoff-zelV" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400">Křepelčí</label>
+                            <input type="number" id="set-cutoff-krep" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
+                        </div>
+                    </div>
+                    <button type="button" onclick="recalcCutoffStock()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-1.5 px-3 rounded-lg text-xs transition">
+                        Přepočítat stav skladu z historie
+                    </button>
+                </div>
+
+                <!-- CLOUD SYNC -->
+                <div>
+                    <h4 class="font-extrabold text-sm text-slate-800 uppercase tracking-wider mb-3 border-b pb-1.5">Cloud záloha (Vercel KV)</h4>
+                    <p class="text-xs text-slate-500 mb-3">Záloha se ukládá na cloudovou instanci po každé změně (s 3s zpožděním). Při nové návštěvě se nabídne načtení.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-slate-400">Přístupový klíč</label>
+                            <input type="password" id="set-cloud-key" placeholder="Tajný klíč (viz Vercel env)" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-mono text-xs">
+                        </div>
+                        <div class="flex items-end gap-2">
+                            <button type="button" onclick="manualSync()" class="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-1.5 px-3 rounded-lg text-xs transition">Nahrát do cloudu</button>
+                            <button type="button" onclick="manualRestore()" class="flex-1 bg-blue-700 hover:bg-blue-800 text-white font-bold py-1.5 px-3 rounded-lg text-xs transition">Stáhnout z cloudu</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- IMPORT / EXPORT -->
+                <div>
+                    <h4 class="font-extrabold text-sm text-slate-800 uppercase tracking-wider mb-3 border-b pb-1.5">Záloha do souboru</h4>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" onclick="exportJSON()" class="bg-slate-700 hover:bg-slate-800 text-white font-bold py-1.5 px-3 rounded-lg text-xs">Exportovat JSON</button>
+                        <label class="bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold py-1.5 px-3 rounded-lg text-xs cursor-pointer">
+                            Importovat JSON
+                            <input type="file" accept=".json" onchange="importJSON(event)" class="hidden">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t">
+                    <button type="button" onclick="closeSettings()" class="px-4 py-2 border rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-50">Zavřít</button>
+                    <button type="button" onclick="saveSettings()" class="px-5 py-2 bg-amber-800 hover:bg-amber-950 text-white font-bold rounded-xl text-xs">Uložit nastavení</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+// ============================================================
+// VAJEČNÝ DENÍK 2026 — refactored
+// ============================================================
+
+const STORAGE_KEY = 'egg_tracker_v4_data';
+const SETTINGS_KEY = 'egg_tracker_v4_settings';
+const CLOUD_KEY_STORAGE = 'egg_tracker_v4_cloud_key';
+
+const DEFAULT_SETTINGS = {
+    prices: { slepM: 4.5, slepV: 5.5, zelM: 6.0, zelV: 6.5, krep: 3.0 },
+    initialStock: { slepM: 3, slepV: 53, zelM: 0, zelV: 0, krep: 81 },
+    historyCutoff: '2026-05-24',  // záznamy ≤ tohoto data jsou orientační a jdou mimo validaci/statistiky
+    cutoffStock: null             // stav skladu k ránu prvního ostrého dne; null = bude auto-spočítáno
+};
+
+const CATEGORIES = [
+    { key: 'slepM', label: 'Slepičí malá' },
+    { key: 'slepV', label: 'Slepičí velká' },
+    { key: 'zelM', label: 'Zelená malá' },
+    { key: 'zelV', label: 'Zelená velká' },
+    { key: 'krep', label: 'Křepelčí' }
+];
+
+const MONTH_NAMES = ['Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen',
+                     'Červenec', 'Srpen', 'Září', 'Říjen', 'Listopad', 'Prosinec'];
+
+// ============================================================
+// SEED DATA (z původní evidence, ve staré struktuře — proběhne migrace)
+// ============================================================
+
+const SEED_RECORDS_OLD = [
+    // LEDEN
+    { date: '2026-01-01', colM: 1, colV: 14, colGR1: 0, colGR2: 0, colKc: 10, selM: 0, selV: 2, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-01-02', colM: 0, colV: 12, colGR1: 0, colGR2: 0, colKc: 10, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 1 },
+    { date: '2026-01-03', colM: 1, colV: 17, colGR1: 0, colGR2: 0, colKc: 9, selM: 0, selV: 70, selGR1: 0, selGR2: 0, selKc: 70 },
+    { date: '2026-01-04', colM: 1, colV: 12, colGR1: 0, colGR2: 0, colKc: 8, selM: 0, selV: 21, selGR1: 0, selGR2: 0, selKc: 1 },
+    { date: '2026-01-05', colM: 0, colV: 12, colGR1: 0, colGR2: 0, colKc: 9, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-01-06', colM: 3, colV: 13, colGR1: 0, colGR2: 0, colKc: 8, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-01-07', colM: 1, colV: 15, colGR1: 0, colGR2: 0, colKc: 10, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-01-08', colM: 1, colV: 12, colGR1: 0, colGR2: 0, colKc: 8, selM: 4, selV: 0, selGR1: 0, selGR2: 0, selKc: 1 },
+    { date: '2026-01-09', colM: 3, colV: 17, colGR1: 0, colGR2: 0, colKc: 7, selM: 0, selV: 20, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-01-10', colM: 2, colV: 21, colGR1: 0, colGR2: 0, colKc: 6, selM: 1, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-01-11', colM: 2, colV: 14, colGR1: 0, colGR2: 0, colKc: 7, selM: 0, selV: 21, selGR1: 0, selGR2: 0, selKc: 20 },
+    { date: '2026-01-12', colM: 2, colV: 20, colGR1: 0, colGR2: 0, colKc: 5, selM: 5, selV: 0, selGR1: 0, selGR2: 0, selKc: 1 },
+    { date: '2026-01-13', colM: 1, colV: 21, colGR1: 0, colGR2: 0, colKc: 2, selM: 2, selV: 0, selGR1: 0, selGR2: 0, selKc: 1 },
+    { date: '2026-01-14', colM: 0, colV: 19, colGR1: 0, colGR2: 0, colKc: 4, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-01-15', colM: 5, colV: 15, colGR1: 0, colGR2: 0, colKc: 5, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-01-16', colM: 3, colV: 17, colGR1: 0, colGR2: 0, colKc: 4, selM: 4, selV: 60, selGR1: 0, selGR2: 0, selKc: 40 },
+    { date: '2026-01-17', colM: 4, colV: 10, colGR1: 0, colGR2: 0, colKc: 5, selM: 9, selV: 100, selGR1: 0, selGR2: 0, selKc: 60 },
+    { date: '2026-01-18', colM: 1, colV: 29, colGR1: 0, colGR2: 0, colKc: 3, selM: 4, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-01-19', colM: 2, colV: 13, colGR1: 0, colGR2: 0, colKc: 3, selM: 1, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-01-20', colM: 0, colV: 17, colGR1: 0, colGR2: 0, colKc: 2, selM: 0, selV: 51, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-01-21', colM: 4, colV: 17, colGR1: 0, colGR2: 0, colKc: 3, selM: 0, selV: 31, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-01-22', colM: 4, colV: 18, colGR1: 0, colGR2: 0, colKc: 2, selM: 5, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-01-23', colM: 1, colV: 16, colGR1: 0, colGR2: 0, colKc: 2, selM: 5, selV: 21, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-01-24', colM: 0, colV: 21, colGR1: 0, colGR2: 0, colKc: 2, selM: 3, selV: 2, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-01-25', colM: 1, colV: 11, colGR1: 0, colGR2: 0, colKc: 2, selM: 0, selV: 50, selGR1: 0, selGR2: 0, selKc: 20 },
+    { date: '2026-01-26', colM: 5, colV: 21, colGR1: 0, colGR2: 0, colKc: 1, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-01-27', colM: 1, colV: 17, colGR1: 0, colGR2: 0, colKc: 3, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-01-28', colM: 4, colV: 22, colGR1: 0, colGR2: 0, colKc: 1, selM: 1, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-01-29', colM: 2, colV: 20, colGR1: 0, colGR2: 0, colKc: 2, selM: 1, selV: 2, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-01-30', colM: 5, colV: 20, colGR1: 0, colGR2: 0, colKc: 2, selM: 0, selV: 60, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-01-31', colM: 4, colV: 17, colGR1: 0, colGR2: 0, colKc: 2, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    // ÚNOR
+    { date: '2026-02-01', colM: 4, colV: 17, colGR1: 0, colGR2: 0, colKc: 2, selM: 1, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-02-02', colM: 3, colV: 19, colGR1: 0, colGR2: 0, colKc: 3, selM: 10, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-02-03', colM: 1, colV: 23, colGR1: 0, colGR2: 0, colKc: 2, selM: 0, selV: 2, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-02-04', colM: 5, colV: 17, colGR1: 0, colGR2: 0, colKc: 4, selM: 2, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-02-05', colM: 3, colV: 24, colGR1: 0, colGR2: 0, colKc: 4, selM: 10, selV: 21, selGR1: 0, selGR2: 0, selKc: 20 },
+    { date: '2026-02-06', colM: 3, colV: 19, colGR1: 0, colGR2: 0, colKc: 6, selM: 0, selV: 120, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-02-07', colM: 7, colV: 23, colGR1: 0, colGR2: 0, colKc: 2, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-02-08', colM: 0, colV: 26, colGR1: 0, colGR2: 0, colKc: 3, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-02-09', colM: 3, colV: 21, colGR1: 0, colGR2: 0, colKc: 3, selM: 3, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-02-10', colM: 4, colV: 17, colGR1: 0, colGR2: 0, colKc: 4, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-02-11', colM: 2, colV: 26, colGR1: 0, colGR2: 0, colKc: 3, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-02-12', colM: 4, colV: 17, colGR1: 0, colGR2: 0, colKc: 4, selM: 12, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-02-13', colM: 0, colV: 22, colGR1: 0, colGR2: 0, colKc: 3, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-02-14', colM: 1, colV: 13, colGR1: 0, colGR2: 0, colKc: 3, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-02-15', colM: 2, colV: 14, colGR1: 0, colGR2: 0, colKc: 3, selM: 0, selV: 21, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-02-16', colM: 1, colV: 14, colGR1: 0, colGR2: 0, colKc: 2, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-02-17', colM: 1, colV: 14, colGR1: 0, colGR2: 0, colKc: 4, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-02-18', colM: 2, colV: 10, colGR1: 0, colGR2: 0, colKc: 2, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-02-19', colM: 2, colV: 13, colGR1: 0, colGR2: 0, colKc: 4, selM: 0, selV: 181, selGR1: 0, selGR2: 0, selKc: 40 },
+    { date: '2026-02-20', colM: 2, colV: 11, colGR1: 0, colGR2: 0, colKc: 2, selM: 0, selV: 40, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-02-21', colM: 2, colV: 11, colGR1: 0, colGR2: 0, colKc: 3, selM: 1, selV: 11, selGR1: 0, selGR2: 0, selKc: 1 },
+    { date: '2026-02-22', colM: 2, colV: 9, colGR1: 0, colGR2: 0, colKc: 3, selM: 33, selV: 28, selGR1: 0, selGR2: 0, selKc: 19 },
+    { date: '2026-02-23', colM: 1, colV: 11, colGR1: 0, colGR2: 0, colKc: 2, selM: 2, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-02-24', colM: 2, colV: 11, colGR1: 0, colGR2: 0, colKc: 3, selM: 1, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-02-25', colM: 2, colV: 14, colGR1: 0, colGR2: 0, colKc: 3, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 1 },
+    { date: '2026-02-26', colM: 2, colV: 15, colGR1: 0, colGR2: 0, colKc: 3, selM: 0, selV: 60, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-02-27', colM: 6, colV: 18, colGR1: 0, colGR2: 0, colKc: 2, selM: 10, selV: 11, selGR1: 0, selGR2: 0, selKc: 1 },
+    { date: '2026-02-28', colM: 3, colV: 22, colGR1: 0, colGR2: 0, colKc: 1, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 1 },
+    // BŘEZEN
+    { date: '2026-03-01', colM: 5, colV: 29, colGR1: 0, colGR2: 0, colKc: 0, selM: 10, selV: 20, selGR1: 0, selGR2: 0, selKc: 10 },
+    { date: '2026-03-02', colM: 6, colV: 28, colGR1: 0, colGR2: 0, colKc: 1, selM: 2, selV: 30, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-03-03', colM: 1, colV: 34, colGR1: 0, colGR2: 0, colKc: 0, selM: 2, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-03-04', colM: 9, colV: 42, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-03-05', colM: 3, colV: 37, colGR1: 0, colGR2: 0, colKc: 0, selM: 2, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-03-06', colM: 7, colV: 39, colGR1: 0, colGR2: 0, colKc: 0, selM: 2, selV: 111, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-03-07', colM: 6, colV: 33, colGR1: 0, colGR2: 0, colKc: 0, selM: 13, selV: 20, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-03-08', colM: 5, colV: 40, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-03-09', colM: 3, colV: 37, colGR1: 0, colGR2: 0, colKc: 0, selM: 1, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-03-10', colM: 6, colV: 26, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-03-11', colM: 4, colV: 33, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 30, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-03-12', colM: 3, colV: 28, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-03-13', colM: 5, colV: 34, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 61, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-03-14', colM: 4, colV: 30, colGR1: 0, colGR2: 0, colKc: 0, selM: 40, selV: 220, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-03-15', colM: 3, colV: 33, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 20, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-03-16', colM: 6, colV: 29, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 30, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-03-17', colM: 1, colV: 39, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 2, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-03-18', colM: 5, colV: 40, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 2, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-03-19', colM: 5, colV: 33, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 31, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-03-20', colM: 6, colV: 38, colGR1: 0, colGR2: 0, colKc: 0, selM: 20, selV: 111, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-03-21', colM: 6, colV: 44, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 2 },
+    { date: '2026-03-22', colM: 5, colV: 31, colGR1: 0, colGR2: 0, colKc: 0, selM: 14, selV: 20, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-03-23', colM: 5, colV: 36, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 2, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-03-24', colM: 2, colV: 33, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-03-25', colM: 7, colV: 45, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 2, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-03-26', colM: 1, colV: 36, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 140, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-03-27', colM: 4, colV: 38, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-03-28', colM: 5, colV: 44, colGR1: 0, colGR2: 0, colKc: 0, selM: 10, selV: 2, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-03-29', colM: 3, colV: 32, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-03-30', colM: 2, colV: 42, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 30, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-03-31', colM: 5, colV: 34, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    // DUBEN
+    { date: '2026-04-01', colM: 4, colV: 32, colGR1: 0, colGR2: 0, colKc: 0, selM: 10, selV: 120, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-04-02', colM: 5, colV: 36, colGR1: 0, colGR2: 0, colKc: 0, selM: 20, selV: 150, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-04-03', colM: 2, colV: 38, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 30, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-04-04', colM: 4, colV: 31, colGR1: 0, colGR2: 0, colKc: 0, selM: 1, selV: 41, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-04-05', colM: 4, colV: 46, colGR1: 0, colGR2: 0, colKc: 0, selM: 10, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-04-06', colM: 5, colV: 39, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 81, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-04-07', colM: 6, colV: 44, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 30, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-04-08', colM: 4, colV: 38, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-04-09', colM: 4, colV: 39, colGR1: 0, colGR2: 0, colKc: 1, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-04-10', colM: 3, colV: 50, colGR1: 1, colGR2: 0, colKc: 1, selM: 0, selV: 2, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-04-11', colM: 2, colV: 38, colGR1: 0, colGR2: 0, colKc: 1, selM: 0, selV: 91, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-04-12', colM: 2, colV: 33, colGR1: 1, colGR2: 0, colKc: 1, selM: 10, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-04-13', colM: 5, colV: 38, colGR1: 1, colGR2: 0, colKc: 2, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 1 },
+    { date: '2026-04-14', colM: 1, colV: 30, colGR1: 0, colGR2: 0, colKc: 1, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-04-15', colM: 5, colV: 35, colGR1: 3, colGR2: 1, colKc: 3, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-04-16', colM: 5, colV: 29, colGR1: 1, colGR2: 1, colKc: 1, selM: 0, selV: 2, selGR1: 1, selGR2: 0, selKc: 0 },
+    { date: '2026-04-17', colM: 2, colV: 30, colGR1: 1, colGR2: 1, colKc: 2, selM: 1, selV: 250, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-04-18', colM: 3, colV: 38, colGR1: 2, colGR2: 0, colKc: 2, selM: 40, selV: 100, selGR1: 0, selGR2: 0, selKc: 12 },
+    { date: '2026-04-19', colM: 3, colV: 27, colGR1: 2, colGR2: 1, colKc: 5, selM: 0, selV: 2, selGR1: 1, selGR2: 0, selKc: 1 },
+    { date: '2026-04-20', colM: 2, colV: 37, colGR1: 1, colGR2: 2, colKc: 4, selM: 0, selV: 2, selGR1: 1, selGR2: 0, selKc: 0 },
+    { date: '2026-04-21', colM: 0, colV: 39, colGR1: 1, colGR2: 1, colKc: 4, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-04-22', colM: 4, colV: 35, colGR1: 2, colGR2: 0, colKc: 3, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-04-23', colM: 0, colV: 42, colGR1: 2, colGR2: 0, colKc: 4, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-04-24', colM: 1, colV: 37, colGR1: 1, colGR2: 1, colKc: 5, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-04-25', colM: 4, colV: 37, colGR1: 2, colGR2: 1, colKc: 5, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-04-26', colM: 2, colV: 29, colGR1: 1, colGR2: 0, colKc: 4, selM: 0, selV: 30, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-04-27', colM: 4, colV: 38, colGR1: 1, colGR2: 1, colKc: 6, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 20 },
+    { date: '2026-04-28', colM: 3, colV: 28, colGR1: 1, colGR2: 0, colKc: 5, selM: 3, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-04-29', colM: 3, colV: 32, colGR1: 0, colGR2: 0, colKc: 7, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-04-30', colM: 1, colV: 21, colGR1: 1, colGR2: 1, colKc: 4, selM: 10, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    // KVĚTEN
+    { date: '2026-05-01', colM: 1, colV: 28, colGR1: 1, colGR2: 0, colKc: 6, selM: 0, selV: 70, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-05-02', colM: 2, colV: 30, colGR1: 1, colGR2: 0, colKc: 6, selM: 17, selV: 320, selGR1: 10, selGR2: 0, selKc: 20 },
+    { date: '2026-05-03', colM: 3, colV: 21, colGR1: 1, colGR2: 0, colKc: 5, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-05-04', colM: 6, colV: 35, colGR1: 0, colGR2: 0, colKc: 10, selM: 0, selV: 9, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-05-05', colM: 2, colV: 25, colGR1: 1, colGR2: 0, colKc: 5, selM: 0, selV: 60, selGR1: 0, selGR2: 0, selKc: 40 },
+    { date: '2026-05-06', colM: 5, colV: 34, colGR1: 1, colGR2: 0, colKc: 6, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-05-07', colM: 4, colV: 35, colGR1: 1, colGR2: 0, colKc: 4, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-05-08', colM: 4, colV: 38, colGR1: 1, colGR2: 0, colKc: 6, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-05-09', colM: 5, colV: 37, colGR1: 0, colGR2: 0, colKc: 5, selM: 0, selV: 3, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-05-10', colM: 4, colV: 44, colGR1: 1, colGR2: 0, colKc: 6, selM: 50, selV: 231, selGR1: 10, selGR2: 0, selKc: 30 },
+    { date: '2026-05-11', colM: 6, colV: 39, colGR1: 1, colGR2: 0, colKc: 5, selM: 3, selV: 12, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-05-12', colM: 6, colV: 43, colGR1: 1, colGR2: 0, colKc: 6, selM: 0, selV: 3, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-05-13', colM: 7, colV: 40, colGR1: 1, colGR2: 1, colKc: 5, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 1 },
+    { date: '2026-05-14', colM: 1, colV: 36, colGR1: 2, colGR2: 0, colKc: 5, selM: 0, selV: 3, selGR1: 0, selGR2: 6, selKc: 0 },
+    { date: '2026-05-15', colM: 3, colV: 37, colGR1: 3, colGR2: 0, colKc: 4, selM: 0, selV: 61, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-05-16', colM: 7, colV: 33, colGR1: 3, colGR2: 0, colKc: 4, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-05-17', colM: 2, colV: 32, colGR1: 4, colGR2: 0, colKc: 4, selM: 0, selV: 23, selGR1: 0, selGR2: 0, selKc: 1 },
+    { date: '2026-05-18', colM: 5, colV: 21, colGR1: 1, colGR2: 1, colKc: 6, selM: 0, selV: 2, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-05-19', colM: 1, colV: 38, colGR1: 3, colGR2: 0, colKc: 4, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-05-20', colM: 2, colV: 30, colGR1: 4, colGR2: 0, colKc: 2, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-05-21', colM: 1, colV: 21, colGR1: 1, colGR2: 0, colKc: 4, selM: 0, selV: 230, selGR1: 0, selGR2: 0, selKc: 50 },
+    { date: '2026-05-22', colM: 4, colV: 23, colGR1: 3, colGR2: 0, colKc: 2, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
+    { date: '2026-05-23', colM: 0, colV: 20, colGR1: 1, colGR2: 0, colKc: 2, selM: 41, selV: 76, selGR1: 25, selGR2: 0, selKc: 0 },
+    { date: '2026-05-24', colM: 2, colV: 18, colGR1: 4, colGR2: 0, colKc: 2, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 }
+];
+
+// ============================================================
+// MIGRACE
+// ============================================================
+
+function migrateRecord(r) {
+    if ('slepM' in r) return r;
+    return {
+        date: r.date,
+        slepM: r.colM || 0,
+        slepV: r.colV || 0,
+        zelM: r.colGR1 || 0,
+        zelV: r.colGR2 || 0,
+        krep: r.colKc || 0,
+        sold_slepM: r.selM || 0,
+        sold_slepV: r.selV || 0,
+        sold_zelM: r.selGR1 || 0,
+        sold_zelV: r.selGR2 || 0,
+        sold_krep: r.selKc || 0
+    };
+}
+
+const SEED_RECORDS = SEED_RECORDS_OLD.map(migrateRecord);
+
+// ============================================================
+// STORAGE
+// ============================================================
+
+const memoryFallback = {};
+
+function safeGet(key) {
+    try { return localStorage.getItem(key); }
+    catch (e) { return memoryFallback[key] || null; }
+}
+
+function safeSet(key, value) {
+    try { localStorage.setItem(key, value); }
+    catch (e) { memoryFallback[key] = value; }
+}
+
+// ============================================================
+// STATE
+// ============================================================
+
+let records = [];
+let settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+let activeMonthFilter = 'all';
+let syncTimeout = null;
+
+// ============================================================
+// VÝPOČTY
+// ============================================================
+
+function sortRecords(arr) {
+    return [...arr].sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function calculateBalances(recs, initStock) {
+    const sorted = sortRecords(recs);
+    const balance = { ...initStock };
+    return sorted.map(r => {
+        balance.slepM += (r.slepM - r.sold_slepM);
+        balance.slepV += (r.slepV - r.sold_slepV);
+        balance.zelM  += (r.zelM  - r.sold_zelM);
+        balance.zelV  += (r.zelV  - r.sold_zelV);
+        balance.krep  += (r.krep  - r.sold_krep);
+        return {
+            ...r,
+            bal_slepM: balance.slepM,
+            bal_slepV: balance.slepV,
+            bal_zelM:  balance.zelM,
+            bal_zelV:  balance.zelV,
+            bal_krep:  balance.krep
+        };
+    });
+}
+
+function computeStockAtDate(recs, initStock, cutoffDate) {
+    const hist = recs.filter(r => r.date <= cutoffDate);
+    const calc = calculateBalances(hist, initStock);
+    if (!calc.length) return { ...initStock };
+    const last = calc[calc.length - 1];
+    return { slepM: last.bal_slepM, slepV: last.bal_slepV,
+             zelM: last.bal_zelM,   zelV: last.bal_zelV, krep: last.bal_krep };
+}
+
+function findNegativeBalances(calculated) {
+    const issues = [];
+    for (const row of calculated) {
+        for (const { key, label } of CATEGORIES) {
+            const bal = row[`bal_${key}`];
+            if (bal < 0) issues.push({ date: row.date, label, balance: bal });
+        }
+    }
+    return issues;
+}
+
+function dailyRevenue(row, prices) {
+    return row.sold_slepM * prices.slepM
+         + row.sold_slepV * prices.slepV
+         + row.sold_zelM  * prices.zelM
+         + row.sold_zelV  * prices.zelV
+         + row.sold_krep  * prices.krep;
+}
+
+function stockValue(row, prices) {
+    return row.bal_slepM * prices.slepM
+         + row.bal_slepV * prices.slepV
+         + row.bal_zelM  * prices.zelM
+         + row.bal_zelV  * prices.zelV
+         + row.bal_krep  * prices.krep;
+}
+
+// ============================================================
+// UTILITY
+// ============================================================
+
+function formatCzechDate(dateStr) {
+    if (!dateStr) return '';
+    const [y, m, d] = dateStr.split('-');
+    return `${parseInt(d)}.${parseInt(m)}.${y}`;
+}
+
+function isWeekend(dateStr) {
+    if (!dateStr) return false;
+    const d = new Date(dateStr + 'T12:00:00');
+    const day = d.getDay();
+    return day === 0 || day === 6;
+}
+
+function formatKc(n) {
+    return Math.round(n).toLocaleString('cs-CZ') + ' Kč';
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = `toast toast-${type} show`;
+    setTimeout(() => toast.classList.remove('show'), 2800);
+}
+
+// ============================================================
+// PERSISTENCE
+// ============================================================
+
+function saveToStorage() {
+    safeSet(STORAGE_KEY, JSON.stringify(records));
+    safeSet(SETTINGS_KEY, JSON.stringify(settings));
+    scheduleCloudSync();
+}
+
+function loadFromStorage() {
+    const rawRecords = safeGet(STORAGE_KEY);
+    const rawSettings = safeGet(SETTINGS_KEY);
+    // Migrace ze starého klíče v3
+    const legacyV3 = safeGet('egg_tracker_v3_data');
+
+    if (rawRecords) {
+        try { records = JSON.parse(rawRecords).map(migrateRecord); }
+        catch (e) { records = [...SEED_RECORDS]; }
+    } else if (legacyV3) {
+        try { records = JSON.parse(legacyV3).map(migrateRecord); }
+        catch (e) { records = [...SEED_RECORDS]; }
+    } else {
+        records = [...SEED_RECORDS];
+    }
+
+    if (rawSettings) {
+        try {
+            const parsed = JSON.parse(rawSettings);
+            settings = {
+                prices: { ...DEFAULT_SETTINGS.prices, ...(parsed.prices || {}) },
+                initialStock: { ...DEFAULT_SETTINGS.initialStock, ...(parsed.initialStock || {}) },
+                historyCutoff: parsed.historyCutoff ?? DEFAULT_SETTINGS.historyCutoff,
+                cutoffStock: parsed.cutoffStock ?? null
+            };
+        } catch (e) { /* keep defaults */ }
+    }
+    // Auto-compute cutoffStock při prvním spuštění (nebo po resetu)
+    if (settings.historyCutoff && !settings.cutoffStock) {
+        settings.cutoffStock = computeStockAtDate(records, settings.initialStock, settings.historyCutoff);
+        safeSet(SETTINGS_KEY, JSON.stringify(settings)); // persists without triggering cloud sync
+    }
+}
+
+// ============================================================
+// CLOUD SYNC (Vercel KV via /api/data)
+// ============================================================
+
+function getCloudKey() {
+    return safeGet(CLOUD_KEY_STORAGE);
+}
+
+function setCloudKey(key) {
+    if (key) safeSet(CLOUD_KEY_STORAGE, key);
+}
+
+function updateSyncIndicator(status) {
+    const dot = document.querySelector('#sync-indicator span:first-child');
+    const text = document.getElementById('sync-status-text');
+    const map = {
+        offline: { color: 'bg-slate-400', label: 'offline' },
+        synced:  { color: 'bg-emerald-400', label: 'synced' },
+        pending: { color: 'bg-amber-300', label: 'syncing…' },
+        error:   { color: 'bg-red-400', label: 'sync error' }
+    };
+    const s = map[status] || map.offline;
+    dot.className = `w-2 h-2 rounded-full ${s.color}`;
+    text.textContent = s.label;
+}
+
+function scheduleCloudSync() {
+    if (!getCloudKey()) return;
+    if (syncTimeout) clearTimeout(syncTimeout);
+    updateSyncIndicator('pending');
+    syncTimeout = setTimeout(cloudSync, 3000);
+}
+
+async function cloudSync() {
+    const key = getCloudKey();
+    if (!key) return;
+    try {
+        const res = await fetch(`/api/data?key=${encodeURIComponent(key)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ records, settings, savedAt: new Date().toISOString() })
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        updateSyncIndicator('synced');
+    } catch (e) {
+        updateSyncIndicator('error');
+        console.error('Cloud sync error:', e);
+    }
+}
+
+async function cloudRestore() {
+    const key = getCloudKey();
+    if (!key) {
+        showToast('Nejprve zadejte přístupový klíč v Nastavení', 'error');
+        return;
+    }
+    try {
+        const res = await fetch(`/api/data?key=${encodeURIComponent(key)}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        if (!json.data) {
+            showToast('V cloudu zatím není žádná záloha', 'info');
+            return;
+        }
+        if (!confirm('Tímto přepíšete aktuální data zálohou z cloudu. Pokračovat?')) return;
+        records = (json.data.records || []).map(migrateRecord);
+        if (json.data.settings) {
+            settings = {
+                prices: { ...DEFAULT_SETTINGS.prices, ...(json.data.settings.prices || {}) },
+                initialStock: { ...DEFAULT_SETTINGS.initialStock, ...(json.data.settings.initialStock || {}) },
+                historyCutoff: json.data.settings.historyCutoff ?? DEFAULT_SETTINGS.historyCutoff,
+                cutoffStock: json.data.settings.cutoffStock ?? null
+            };
+        }
+        if (settings.historyCutoff && !settings.cutoffStock) {
+            settings.cutoffStock = computeStockAtDate(records, settings.initialStock, settings.historyCutoff);
+        }
+        safeSet(STORAGE_KEY, JSON.stringify(records));
+        safeSet(SETTINGS_KEY, JSON.stringify(settings));
+        updateUI();
+        renderMonthFilters();
+        showToast('Data úspěšně načtena z cloudu', 'success');
+    } catch (e) {
+        showToast('Chyba při načítání: ' + e.message, 'error');
+    }
+}
+
+function manualSync() {
+    const keyInput = document.getElementById('set-cloud-key').value.trim();
+    if (keyInput) setCloudKey(keyInput);
+    if (!getCloudKey()) {
+        showToast('Zadejte přístupový klíč', 'error');
+        return;
+    }
+    updateSyncIndicator('pending');
+    cloudSync().then(() => showToast('Záloha odeslána', 'success'));
+}
+
+function manualRestore() {
+    const keyInput = document.getElementById('set-cloud-key').value.trim();
+    if (keyInput) setCloudKey(keyInput);
+    cloudRestore();
+}
+
+// ============================================================
+// FILTRY
+// ============================================================
+
+function renderMonthFilters() {
+    const months = [...new Set(records.map(r => r.date.substring(0, 7)))].sort();
+    const container = document.getElementById('month-filter-buttons');
+    let html = `<button onclick="filterByMonth('all')" id="btn-all" class="${activeMonthFilter === 'all' ? 'bg-amber-700 text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'} font-bold py-2 px-3 rounded-xl text-xs transition">Všechny</button>`;
+    for (const month of months) {
+        const [year, m] = month.split('-');
+        const label = `${MONTH_NAMES[parseInt(m) - 1]} ${year}`;
+        const active = activeMonthFilter === month;
+        html += `<button onclick="filterByMonth('${month}')" id="btn-${month}" class="${active ? 'bg-amber-700 text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'} font-bold py-2 px-3 rounded-xl text-xs transition">${label}</button>`;
+    }
+    container.innerHTML = html;
+}
+
+function filterByMonth(month) {
+    activeMonthFilter = month;
+    renderMonthFilters();
+    updateUI();
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+
+function updateUI() {
+    // Pro tabulku: všechny záznamy se svými kumulativními zůstatky (history zůstatky viditelné pro referenci)
+    const calculated = calculateBalances(records, settings.initialStock);
+    const prices = settings.prices;
+
+    // Pro statistiky a validaci: jen ostrá data (po cutoffu)
+    const cutoff = settings.historyCutoff || '';
+    const cutoffStock = settings.cutoffStock || settings.initialStock;
+    const activeRecords = cutoff ? records.filter(r => r.date > cutoff) : records;
+    const activeCalculated = calculateBalances(activeRecords, cutoffStock);
+
+    // Banner aktualizace
+    if (cutoff) {
+        const d = new Date(cutoff + 'T12:00:00');
+        d.setDate(d.getDate() + 1);
+        const activeFrom = d.toISOString().split('T')[0];
+        const bannerCutoff = document.getElementById('banner-cutoff-date');
+        const bannerFrom = document.getElementById('banner-active-from');
+        if (bannerCutoff) bannerCutoff.textContent = formatCzechDate(cutoff);
+        if (bannerFrom) bannerFrom.textContent = formatCzechDate(activeFrom);
+    }
+
+    // Souhrny — pouze z ostrých dat (volba A)
+    let totalSneseno = { slepM: 0, slepV: 0, zelM: 0, zelV: 0, krep: 0 };
+    let totalProdano = { slepM: 0, slepV: 0, zelM: 0, zelV: 0, krep: 0 };
+    let totalRevenue = 0;
+    for (const r of activeCalculated) {
+        totalSneseno.slepM += r.slepM; totalSneseno.slepV += r.slepV;
+        totalSneseno.zelM  += r.zelM;  totalSneseno.zelV  += r.zelV;
+        totalSneseno.krep  += r.krep;
+        totalProdano.slepM += r.sold_slepM; totalProdano.slepV += r.sold_slepV;
+        totalProdano.zelM  += r.sold_zelM;  totalProdano.zelV  += r.sold_zelV;
+        totalProdano.krep  += r.sold_krep;
+        totalRevenue += dailyRevenue(r, prices);
+    }
+
+    const last = activeCalculated[activeCalculated.length - 1] || {
+        bal_slepM: cutoffStock.slepM, bal_slepV: cutoffStock.slepV,
+        bal_zelM: cutoffStock.zelM,   bal_zelV: cutoffStock.zelV,
+        bal_krep: cutoffStock.krep
+    };
+    const lastStockValue = stockValue(last, prices);
+
+    // Karty
+    const sumS = totalSneseno.slepM + totalSneseno.slepV + totalSneseno.zelM + totalSneseno.zelV + totalSneseno.krep;
+    const sumP = totalProdano.slepM + totalProdano.slepV + totalProdano.zelM + totalProdano.zelV + totalProdano.krep;
+    const sumSklad = last.bal_slepM + last.bal_slepV + last.bal_zelM + last.bal_zelV + last.bal_krep;
+
+    document.getElementById('card-sneseno').textContent = `${sumS.toLocaleString('cs-CZ')} ks`;
+    document.getElementById('card-sneseno-detail').textContent =
+        `Slep: ${totalSneseno.slepM + totalSneseno.slepV} | Zel: ${totalSneseno.zelM + totalSneseno.zelV} | Křep: ${totalSneseno.krep}`;
+
+    document.getElementById('card-prodano').textContent = `${sumP.toLocaleString('cs-CZ')} ks`;
+    document.getElementById('card-prodano-detail').textContent =
+        `Slep: ${totalProdano.slepM + totalProdano.slepV} | Zel: ${totalProdano.zelM + totalProdano.zelV} | Křep: ${totalProdano.krep}`;
+
+    document.getElementById('card-sklad').textContent = `${sumSklad.toLocaleString('cs-CZ')} ks`;
+    document.getElementById('card-sklad-detail').textContent =
+        `Slep: ${last.bal_slepM + last.bal_slepV} | Zel: ${last.bal_zelM + last.bal_zelV} | Křep: ${last.bal_krep}`;
+
+    document.getElementById('card-kasa').textContent = formatKc(totalRevenue + lastStockValue);
+    document.getElementById('card-kasa-detail').textContent =
+        `Tržba: ${formatKc(totalRevenue)} | Sklad: ${formatKc(lastStockValue)}`;
+
+    // Filtrování pro tabulku
+    const searchQuery = document.getElementById('search-input').value.toLowerCase();
+    let display = [...calculated];
+    if (activeMonthFilter !== 'all') {
+        display = display.filter(r => r.date.startsWith(activeMonthFilter));
+    }
+    if (searchQuery) {
+        display = display.filter(r => {
+            const cz = formatCzechDate(r.date).toLowerCase();
+            return cz.includes(searchQuery) || r.date.includes(searchQuery);
+        });
+    }
+
+    document.getElementById('filter-count').textContent = `Zobrazeno: ${display.length} dní`;
+
+    const tbody = document.getElementById('diary-table-body');
+    tbody.innerHTML = '';
+    display.reverse().forEach(row => {
+        const wk = isWeekend(row.date);
+        const isHistory = cutoff && row.date <= cutoff;
+        const tr = document.createElement('tr');
+        if (isHistory) {
+            tr.className = 'history-row transition';
+        } else if (wk) {
+            tr.className = 'weekend-row transition hover:bg-amber-100/80';
+        } else {
+            tr.className = 'hover:bg-slate-50 transition';
+        }
+
+        const negCls = (n) => n < 0 ? 'negative-balance' : '';
+        const pairCell = (a, b, classNorm) => {
+            const aCls = negCls(a) || classNorm;
+            const bCls = negCls(b) || classNorm;
+            return `<span class="${aCls}">${a}</span><span class="text-slate-300">/</span><span class="${bCls}">${b}</span>`;
+        };
+
+        const dRev = dailyRevenue(row, prices);
+        const sVal = stockValue(row, prices);
+        const histBadge = isHistory
+            ? '<span class="ml-1.5 text-[9px] bg-slate-300 text-slate-600 rounded px-1 font-bold uppercase tracking-wide align-middle">hist.</span>'
+            : '';
+
+        tr.innerHTML = `
+            <td class="py-3 px-4 font-bold text-slate-700">${formatCzechDate(row.date)}${histBadge}</td>
+            <td class="py-3 px-2 text-center bg-amber-50/30">${pairCell(row.slepM, row.slepV, 'font-bold text-amber-800')}</td>
+            <td class="py-3 px-2 text-center bg-amber-50/30">${pairCell(row.zelM, row.zelV, 'font-bold text-emerald-700')}</td>
+            <td class="py-3 px-2 text-center bg-amber-50/30 border-r border-slate-100 font-bold text-amber-700">${row.krep || '-'}</td>
+            <td class="py-3 px-2 text-center bg-blue-50/10 text-blue-800 font-bold">${(row.sold_slepM || row.sold_slepV) ? `${row.sold_slepM}/${row.sold_slepV}` : '-'}</td>
+            <td class="py-3 px-2 text-center bg-blue-50/10 text-emerald-800 font-bold">${(row.sold_zelM || row.sold_zelV) ? `${row.sold_zelM}/${row.sold_zelV}` : '-'}</td>
+            <td class="py-3 px-2 text-center bg-blue-50/10 border-r border-slate-100 text-blue-700 font-bold">${row.sold_krep || '-'}</td>
+            <td class="py-3 px-2 text-center bg-emerald-50/10">${pairCell(row.bal_slepM, row.bal_slepV, 'font-bold text-slate-700')}</td>
+            <td class="py-3 px-2 text-center bg-emerald-50/10">${pairCell(row.bal_zelM, row.bal_zelV, 'font-bold text-emerald-800')}</td>
+            <td class="py-3 px-2 text-center bg-emerald-50/10 border-r border-slate-100 font-bold ${negCls(row.bal_krep) || 'text-amber-800'}">${row.bal_krep}</td>
+            <td class="py-3 px-2 text-center bg-purple-50/20 font-bold text-purple-800">${dRev > 0 ? formatKc(dRev) : '-'}</td>
+            <td class="py-3 px-2 text-center bg-purple-50/30 font-black text-slate-800">${formatKc(sVal)}</td>
+            <td class="py-3 px-4 text-center">
+                <div class="flex items-center justify-center space-x-2">
+                    <button onclick="editRecord('${row.date}')" class="text-amber-800 hover:text-amber-950 font-bold">Upravit</button>
+                    <span class="text-slate-300">|</span>
+                    <button onclick="deleteRecord('${row.date}')" class="text-red-600 hover:text-red-800 font-bold">Smazat</button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+// ============================================================
+// MODAL: ZÁZNAM
+// ============================================================
+
+function openAddModal() {
+    document.getElementById('modal-title').textContent = 'Zapsat nový den';
+    document.getElementById('edit-original-date').value = '';
+    document.getElementById('record-form').reset();
+    document.getElementById('form-date').value = new Date().toISOString().split('T')[0];
+    ['slepM','slepV','zelM','zelV','krep','sold_slepM','sold_slepV','sold_zelM','sold_zelV','sold_krep']
+        .forEach(k => document.getElementById('form-' + k).value = 0);
+    document.getElementById('record-modal').classList.remove('hidden');
+}
+
+function closeAddModal() {
+    document.getElementById('record-modal').classList.add('hidden');
+}
+
+function editRecord(date) {
+    const rec = records.find(r => r.date === date);
+    if (!rec) return;
+    document.getElementById('modal-title').textContent = `Upravit den: ${formatCzechDate(date)}`;
+    document.getElementById('edit-original-date').value = date;
+    document.getElementById('form-date').value = rec.date;
+    ['slepM','slepV','zelM','zelV','krep','sold_slepM','sold_slepV','sold_zelM','sold_zelV','sold_krep']
+        .forEach(k => document.getElementById('form-' + k).value = rec[k] || 0);
+    document.getElementById('record-modal').classList.remove('hidden');
+}
+
+function deleteRecord(date) {
+    if (!confirm(`Opravdu si přeješ smazat záznam z ${formatCzechDate(date)}?`)) return;
+    records = records.filter(r => r.date !== date);
+
+    // Kontrola záporných zůstatků po smazání — jen ostrá data
+    const _delCutoff = settings.historyCutoff || '';
+    const _delCutoffStock = settings.cutoffStock || settings.initialStock;
+    const _delActive = _delCutoff ? records.filter(r => r.date > _delCutoff) : records;
+    const calc = calculateBalances(_delActive, _delCutoffStock);
+    const issues = findNegativeBalances(calc);
+    if (issues.length > 0) {
+        const list = issues.slice(0, 8).map(i => `  • ${i.label}: ${i.balance} ks dne ${formatCzechDate(i.date)}`).join('\n');
+        const more = issues.length > 8 ? `\n  …a další ${issues.length - 8} případy` : '';
+        if (!confirm(`Smazání záznamu způsobí záporné zůstatky:\n\n${list}${more}\n\nOpravdu smazat?`)) {
+            // Revert
+            loadFromStorage();
+            updateUI();
+            renderMonthFilters();
+            return;
+        }
+    }
+
+    saveToStorage();
+    updateUI();
+    renderMonthFilters();
+}
+
+function handleFormSubmit(event) {
+    event.preventDefault();
+    const originalDate = document.getElementById('edit-original-date').value;
+    const chosenDate = document.getElementById('form-date').value;
+
+    const newRec = {
+        date: chosenDate,
+        slepM: parseInt(document.getElementById('form-slepM').value) || 0,
+        slepV: parseInt(document.getElementById('form-slepV').value) || 0,
+        zelM:  parseInt(document.getElementById('form-zelM').value)  || 0,
+        zelV:  parseInt(document.getElementById('form-zelV').value)  || 0,
+        krep:  parseInt(document.getElementById('form-krep').value)  || 0,
+        sold_slepM: parseInt(document.getElementById('form-sold_slepM').value) || 0,
+        sold_slepV: parseInt(document.getElementById('form-sold_slepV').value) || 0,
+        sold_zelM:  parseInt(document.getElementById('form-sold_zelM').value)  || 0,
+        sold_zelV:  parseInt(document.getElementById('form-sold_zelV').value)  || 0,
+        sold_krep:  parseInt(document.getElementById('form-sold_krep').value)  || 0
+    };
+
+    // Validace duplicit
+    if (originalDate && chosenDate !== originalDate) {
+        if (records.some(r => r.date === chosenDate)) {
+            alert(`Záznam pro ${formatCzechDate(chosenDate)} už existuje. Změňte datum nebo upravte stávající záznam.`);
+            return;
+        }
+    } else if (!originalDate) {
+        if (records.some(r => r.date === chosenDate)) {
+            alert(`Záznam pro ${formatCzechDate(chosenDate)} už existuje. Použijte úpravu existujícího záznamu.`);
+            return;
+        }
+    }
+
+    // Simulace nového stavu
+    let tentative;
+    if (originalDate) {
+        tentative = records.map(r => r.date === originalDate ? newRec : r);
+    } else {
+        tentative = [...records, newRec];
+    }
+
+    // Kontrola záporných zůstatků — jen ostrá data
+    const _subCutoff = settings.historyCutoff || '';
+    const _subCutoffStock = settings.cutoffStock || settings.initialStock;
+    const _subActive = _subCutoff ? tentative.filter(r => r.date > _subCutoff) : tentative;
+    const calc = calculateBalances(_subActive, _subCutoffStock);
+    const issues = findNegativeBalances(calc);
+    if (issues.length > 0) {
+        const list = issues.slice(0, 8).map(i => `  • ${i.label}: ${i.balance} ks dne ${formatCzechDate(i.date)}`).join('\n');
+        const more = issues.length > 8 ? `\n  …a další ${issues.length - 8} případy` : '';
+        if (!confirm(`Pozor! Tento záznam způsobí záporný zůstatek:\n\n${list}${more}\n\nOpravdu uložit?`)) {
+            return;
+        }
+    }
+
+    records = tentative;
+    saveToStorage();
+    closeAddModal();
+    updateUI();
+    renderMonthFilters();
+}
+
+// ============================================================
+// MODAL: NASTAVENÍ
+// ============================================================
+
+function openSettings() {
+    ['slepM','slepV','zelM','zelV','krep'].forEach(k => {
+        document.getElementById(`set-price-${k}`).value = settings.prices[k];
+        document.getElementById(`set-init-${k}`).value = settings.initialStock[k];
+    });
+    const key = getCloudKey();
+    if (key) document.getElementById('set-cloud-key').value = key;
+    // Uzávěrka historie
+    document.getElementById('set-cutoff-date').value = settings.historyCutoff || '';
+    const cs = settings.cutoffStock || {};
+    ['slepM','slepV','zelM','zelV','krep'].forEach(k => {
+        document.getElementById(`set-cutoff-${k}`).value = cs[k] ?? '';
+    });
+    document.getElementById('settings-modal').classList.remove('hidden');
+}
+
+function closeSettings() {
+    document.getElementById('settings-modal').classList.add('hidden');
+}
+
+function saveSettings() {
+    const newPrices = {}, newInit = {}, newCutoffStock = {};
+    for (const { key } of CATEGORIES) {
+        newPrices[key]      = parseFloat(document.getElementById(`set-price-${key}`).value) || 0;
+        newInit[key]        = parseInt(document.getElementById(`set-init-${key}`).value) || 0;
+        newCutoffStock[key] = parseInt(document.getElementById(`set-cutoff-${key}`).value) || 0;
+    }
+    settings.prices       = newPrices;
+    settings.initialStock = newInit;
+    settings.historyCutoff = document.getElementById('set-cutoff-date').value || settings.historyCutoff;
+    settings.cutoffStock   = newCutoffStock;
+
+    const keyInput = document.getElementById('set-cloud-key').value.trim();
+    if (keyInput) setCloudKey(keyInput);
+
+    saveToStorage();
+    closeSettings();
+    updateUI();
+    showToast('Nastavení uloženo', 'success');
+}
+
+function recalcCutoffStock() {
+    const cutoff = document.getElementById('set-cutoff-date').value || settings.historyCutoff;
+    if (!cutoff) { showToast('Nejprve zadejte datum uzávěrky', 'error'); return; }
+    const stock = computeStockAtDate(records, settings.initialStock, cutoff);
+    for (const { key } of CATEGORIES) {
+        document.getElementById(`set-cutoff-${key}`).value = stock[key];
+    }
+    showToast('Stav skladu přepočítán z historie', 'success');
+}
+
+// ============================================================
+// EXPORT / IMPORT
+// ============================================================
+
+function exportToCSV() {
+    const calc = calculateBalances(records, settings.initialStock);
+    const prices = settings.prices;
+    const header = [
+        'Datum',
+        'Sneseno Slep M', 'Sneseno Slep V', 'Sneseno Zel M', 'Sneseno Zel V', 'Sneseno Křep',
+        'Prodáno Slep M', 'Prodáno Slep V', 'Prodáno Zel M', 'Prodáno Zel V', 'Prodáno Křep',
+        'Zůstatek Slep M', 'Zůstatek Slep V', 'Zůstatek Zel M', 'Zůstatek Zel V', 'Zůstatek Křep',
+        'Tržba dne (Kč)', 'Hodnota skladu (Kč)'
+    ].join(';');
+
+    const lines = [header];
+    calc.forEach(r => {
+        lines.push([
+            formatCzechDate(r.date),
+            r.slepM, r.slepV, r.zelM, r.zelV, r.krep,
+            r.sold_slepM, r.sold_slepV, r.sold_zelM, r.sold_zelV, r.sold_krep,
+            r.bal_slepM, r.bal_slepV, r.bal_zelM, r.bal_zelV, r.bal_krep,
+            Math.round(dailyRevenue(r, prices)),
+            Math.round(stockValue(r, prices))
+        ].join(';'));
+    });
+
+    const csv = '\ufeff' + lines.join('\r\n'); // BOM kvůli Excelu a diakritice
+    downloadBlob(csv, 'vajecny_denik_export.csv', 'text/csv;charset=utf-8;');
+}
+
+function exportJSON() {
+    const data = { records, settings, exportedAt: new Date().toISOString() };
+    const json = JSON.stringify(data, null, 2);
+    downloadBlob(json, `vajecny_denik_backup_${new Date().toISOString().split('T')[0]}.json`, 'application/json');
+}
+
+function importJSON(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const parsed = JSON.parse(e.target.result);
+            if (!Array.isArray(parsed.records)) {
+                throw new Error('Neplatný formát: chybí pole "records"');
+            }
+            if (!confirm(`Importovat ${parsed.records.length} záznamů? Tímto se přepíšou aktuální data.`)) return;
+            records = parsed.records.map(migrateRecord);
+            if (parsed.settings) {
+                settings = {
+                    prices: { ...DEFAULT_SETTINGS.prices, ...(parsed.settings.prices || {}) },
+                    initialStock: { ...DEFAULT_SETTINGS.initialStock, ...(parsed.settings.initialStock || {}) },
+                    historyCutoff: parsed.settings.historyCutoff ?? DEFAULT_SETTINGS.historyCutoff,
+                    cutoffStock: parsed.settings.cutoffStock ?? null
+                };
+            }
+            if (settings.historyCutoff && !settings.cutoffStock) {
+                settings.cutoffStock = computeStockAtDate(records, settings.initialStock, settings.historyCutoff);
+            }
+            saveToStorage();
+            updateUI();
+            renderMonthFilters();
+            showToast(`Importováno ${records.length} záznamů`, 'success');
+        } catch (err) {
+            showToast('Chyba importu: ' + err.message, 'error');
+        }
+    };
+    reader.readAsText(file);
+    event.target.value = ''; // umožní reimport stejného souboru
+}
+
+function downloadBlob(content, filename, mime) {
+    try {
+        const blob = new Blob([content], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    } catch (e) {
+        alert('Chyba při generování souboru: ' + e.message);
+    }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+
+window.addEventListener('DOMContentLoaded', () => {
+    loadFromStorage();
+    const formDate = document.getElementById('form-date');
+    if (formDate) formDate.value = new Date().toISOString().split('T')[0];
+    renderMonthFilters();
+    updateUI();
+    if (getCloudKey()) updateSyncIndicator('synced');
+});
+
+// Expose pro inline onclick
+window.openAddModal = openAddModal;
+window.closeAddModal = closeAddModal;
+window.editRecord = editRecord;
+window.deleteRecord = deleteRecord;
+window.handleFormSubmit = handleFormSubmit;
+window.openSettings = openSettings;
+window.closeSettings = closeSettings;
+window.saveSettings = saveSettings;
+window.filterByMonth = filterByMonth;
+window.exportToCSV = exportToCSV;
+window.exportJSON = exportJSON;
+window.importJSON = importJSON;
+window.manualSync = manualSync;
+window.manualRestore = manualRestore;
+window.updateUI = updateUI;
+window.recalcCutoffStock = recalcCutoffStock;
+
+</script>
+</body>
+</html>
