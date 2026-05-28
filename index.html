@@ -81,7 +81,10 @@
                 </span>
                 <button onclick="openSettings()" class="bg-amber-800/80 hover:bg-amber-800 text-white px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">Nastavení</button>
                 <button onclick="exportToCSV()" class="bg-amber-800/80 hover:bg-amber-800 text-white px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">Stáhnout CSV</button>
-                <button onclick="openAddModal()" class="bg-white hover:bg-amber-50 text-amber-900 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition">Zapsat nový den</button>
+                <button onclick="openAddModal()" class="bg-white hover:bg-amber-50 text-amber-900 px-6 py-3 rounded-xl text-sm font-extrabold flex items-center gap-2 shadow-lg transition border-2 border-amber-200 hover:border-amber-300 active:scale-95">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                    Vytvořit nový den
+                </button>
             </div>
         </div>
     </header>
@@ -254,6 +257,26 @@
                 </div>
             </div>
         </div>
+
+        <!-- DNEŠNÍ DEN — akční panel -->
+        <section class="rounded-2xl shadow-sm border-2 border-amber-300 overflow-hidden">
+            <div class="bg-gradient-to-r from-amber-500 to-amber-600 px-5 py-3 flex flex-wrap items-center gap-3">
+                <span class="text-white text-base">📅</span>
+                <h2 class="text-sm font-extrabold text-white uppercase tracking-wider">Dnešní den —</h2>
+                <span id="today-date-header" class="text-white font-bold text-sm"></span>
+                <span id="today-status-badge" class="ml-auto text-[11px] font-extrabold px-3 py-1 rounded-full bg-amber-400/60 text-white"></span>
+            </div>
+            <div class="bg-amber-50/50 flex flex-col sm:flex-row items-center gap-4 px-5 py-4">
+                <p id="today-info-text" class="flex-1 text-sm text-slate-700 font-medium leading-relaxed"></p>
+                <button onclick="openAddSaleToday()" id="today-btn-sale"
+                    class="shrink-0 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-extrabold px-7 py-3.5 rounded-xl text-sm flex items-center gap-2.5 shadow-md transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+                    </svg>
+                    <span id="today-btn-sale-label">Přidat prodej</span>
+                </button>
+            </div>
+        </section>
 
         <!-- HLAVNÍ TABULKA -->
         <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
@@ -1260,11 +1283,15 @@ function updateUI() {
 
     const tbody = document.getElementById('diary-table-body');
     tbody.innerHTML = '';
+    const todayStr = new Date().toISOString().split('T')[0];
     display.reverse().forEach(row => {
         const wk = isWeekend(row.date);
         const isHistory = cutoff && row.date <= cutoff;
+        const isToday = row.date === todayStr;
         const tr = document.createElement('tr');
-        if (isHistory) {
+        if (isToday) {
+            tr.className = 'transition bg-amber-50 outline outline-2 outline-amber-400/60 outline-offset-[-2px]';
+        } else if (isHistory) {
             tr.className = 'history-row transition';
         } else if (wk) {
             tr.className = 'weekend-row transition hover:bg-amber-100/80';
@@ -1284,9 +1311,12 @@ function updateUI() {
         const histBadge = isHistory
             ? '<span class="ml-1.5 text-[9px] bg-slate-300 text-slate-600 rounded px-1 font-bold uppercase tracking-wide align-middle">hist.</span>'
             : '';
+        const todayBadge = isToday
+            ? '<span class="ml-1.5 text-[9px] bg-amber-500 text-white rounded px-1.5 py-0.5 font-black uppercase tracking-wide align-middle">Dnes</span>'
+            : '';
 
         tr.innerHTML = `
-            <td class="py-3 px-4 font-bold text-slate-700">${formatCzechDate(row.date)}${histBadge}</td>
+            <td class="py-3 px-4 font-bold text-slate-700">${formatCzechDate(row.date)}${histBadge}${todayBadge}</td>
             <td class="py-3 px-2 text-center bg-amber-50/30">${pairCell(row.slepM, row.slepV, 'font-bold text-amber-800')}</td>
             <td class="py-3 px-2 text-center bg-amber-50/30">${pairCell(row.zelM, row.zelV, 'font-bold text-emerald-700')}</td>
             <td class="py-3 px-2 text-center bg-amber-50/30 border-r border-slate-100 font-bold text-amber-700">${row.krep || '-'}</td>
@@ -1308,6 +1338,9 @@ function updateUI() {
         `;
         tbody.appendChild(tr);
     });
+
+    // Dnešní panel
+    _updateTodayPanel(records);
 
     // Grafy aktualizovat po vyrendrování tabulky
     updateCharts();
@@ -1334,6 +1367,40 @@ function openAddModal() {
 
 function closeAddModal() {
     document.getElementById('record-modal').classList.add('hidden');
+}
+
+function openAddSaleToday() {
+    const today = new Date().toISOString().split('T')[0];
+    const existing = records.find(r => r.date === today);
+    if (existing) {
+        editRecord(today);
+    } else {
+        openAddModal();
+    }
+}
+
+function _updateTodayPanel(recs) {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todayRec = recs.find(r => r.date === todayStr);
+
+    const dateEl    = document.getElementById('today-date-header');
+    const badge     = document.getElementById('today-status-badge');
+    const info      = document.getElementById('today-info-text');
+    const btnLabel  = document.getElementById('today-btn-sale-label');
+
+    if (dateEl) dateEl.textContent = formatCzechDate(todayStr);
+
+    if (todayRec) {
+        const sneseno = (todayRec.slepM||0)+(todayRec.slepV||0)+(todayRec.zelM||0)+(todayRec.zelV||0)+(todayRec.krep||0);
+        const prodano = (todayRec.sold_slepM||0)+(todayRec.sold_slepV||0)+(todayRec.sold_zelM||0)+(todayRec.sold_zelV||0)+(todayRec.sold_krep||0);
+        if (badge) { badge.textContent = '✔ Zapsáno'; badge.className = 'ml-auto text-[11px] font-extrabold px-3 py-1 rounded-full bg-emerald-500 text-white'; }
+        if (info) info.textContent = `Sneseno: ${sneseno} ks · Prodáno dnes: ${prodano} ks — chcete doplnit nebo upravit prodej?`;
+        if (btnLabel) btnLabel.textContent = 'Upravit dnešní prodej';
+    } else {
+        if (badge) { badge.textContent = '○ Čeká na zápis'; badge.className = 'ml-auto text-[11px] font-extrabold px-3 py-1 rounded-full bg-amber-200/80 text-amber-900'; }
+        if (info) info.textContent = 'Pro dnešní den ještě nebyl zapsán žádný záznam — klikněte a zapište snášku i prodeje najednou.';
+        if (btnLabel) btnLabel.textContent = 'Přidat prodej';
+    }
 }
 
 function editRecord(date) {
@@ -1972,6 +2039,7 @@ window.recalcCutoffStock = recalcCutoffStock;
 window.toggleStats = toggleStats;
 window.dismissSetupBanner = dismissSetupBanner;
 window.stepVal = stepVal;
+window.openAddSaleToday = openAddSaleToday;
 
 </script>
 </body>
