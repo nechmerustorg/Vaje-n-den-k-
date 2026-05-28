@@ -579,7 +579,8 @@
 const STORAGE_KEY = 'egg_tracker_v4_data';
 const SETTINGS_KEY = 'egg_tracker_v4_settings';
 const CLOUD_KEY_STORAGE = 'egg_tracker_v4_cloud_key';
-const SYNC_TIMESTAMP_KEY = 'egg_tracker_v4_sync_at'; // timestamp posledního úspěšného cloud sync
+const SYNC_TIMESTAMP_KEY = 'egg_tracker_v4_sync_at';       // timestamp posledního cloud sync (records)
+const SETTINGS_TS_KEY    = 'egg_tracker_v4_settings_ts';   // timestamp posledního uložení nastavení
 
 const DEFAULT_SETTINGS = {
     prices: { slepM: 4.5, slepV: 5.5, zelM: 6.0, zelV: 6.5, krep: 3.0 },
@@ -905,14 +906,17 @@ function showToast(message, type = 'info') {
 // ============================================================
 
 function _migrateSettings(s) {
-    // Migrace: starý cutoff byl 2026-05-24 (obsahoval chybná data z papírové evidence)
+    // One-time migration: starý cutoff 2026-05-24 → 2026-05-22
     if (s.historyCutoff === '2026-05-24') {
         s.historyCutoff = '2026-05-22';
-        s.cutoffStock   = { slepM: 3, slepV: 0, zelM: 1, zelV: 1, krep: 7 };
+        // cutoffStock resetovat jen pokud ještě není nastaven uživatelem
+        if (!s.cutoffStock) {
+            s.cutoffStock = { ...DEFAULT_SETTINGS.cutoffStock };
+        }
     }
-    // Fallback pro případ chybějícího cutoffStock
+    // Fallback: pokud stále chybí cutoffStock, použij výchozí hodnoty (ne výpočet z chybné historie)
     if (s.historyCutoff && !s.cutoffStock) {
-        s.cutoffStock = computeStockAtDate(records, s.initialStock, s.historyCutoff);
+        s.cutoffStock = { ...DEFAULT_SETTINGS.cutoffStock };
     }
 }
 
@@ -990,10 +994,11 @@ async function cloudSync() {
     if (!key) return;
     try {
         const savedAt = new Date().toISOString();
+        const settingsSavedAt = safeGet(SETTINGS_TS_KEY) || savedAt;
         const res = await fetch(`/api/data?key=${encodeURIComponent(key)}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ records, settings, savedAt })
+            body: JSON.stringify({ records, settings, savedAt, settingsSavedAt })
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         updateSyncIndicator('synced');
@@ -1032,6 +1037,7 @@ async function cloudRestore() {
         safeSet(STORAGE_KEY, JSON.stringify(records));
         safeSet(SETTINGS_KEY, JSON.stringify(settings));
         safeSet(SYNC_TIMESTAMP_KEY, json.data.savedAt || new Date().toISOString());
+        safeSet(SETTINGS_TS_KEY, json.data.settingsSavedAt || json.data.savedAt || new Date().toISOString());
         updateUI();
         renderMonthFilters();
         showToast('Data úspěšně načtena z cloudu', 'success');
@@ -1060,10 +1066,17 @@ async function autoSyncOnStartup() {
         const localTs = safeGet(SYNC_TIMESTAMP_KEY);
         const isFresh = !safeGet(STORAGE_KEY); // nový prohlížeč, ještě nebylo nic uloženo
 
+        // Timestamps pro records a settings jsou nezávislé
+        const cloudSettingsTs = json.data.settingsSavedAt || json.data.savedAt;
+        const localSettingsTs = safeGet(SETTINGS_TS_KEY);
+        const shouldPullSettings = isFresh || !localSettingsTs || cloudSettingsTs > localSettingsTs;
+
         if (isFresh || (cloudTs && (!localTs || cloudTs > localTs))) {
-            // Cloud má novější data → auto-pull (tiše, bez confirm)
+            // Records: cloud je novější → stáhnout
             records = (json.data.records || []).map(migrateRecord);
-            if (json.data.settings) {
+
+            // Settings: stáhnout jen pokud jsou cloud nastavení novější než lokální
+            if (shouldPullSettings && json.data.settings) {
                 settings = {
                     prices:        { ...DEFAULT_SETTINGS.prices,       ...(json.data.settings.prices       || {}) },
                     initialStock:  { ...DEFAULT_SETTINGS.initialStock, ...(json.data.settings.initialStock  || {}) },
@@ -1071,7 +1084,9 @@ async function autoSyncOnStartup() {
                     cutoffStock:   json.data.settings.cutoffStock   ?? null
                 };
                 _migrateSettings(settings);
+                safeSet(SETTINGS_TS_KEY, cloudSettingsTs);
             }
+
             safeSet(STORAGE_KEY,        JSON.stringify(records));
             safeSet(SETTINGS_KEY,       JSON.stringify(settings));
             safeSet(SYNC_TIMESTAMP_KEY, cloudTs || new Date().toISOString());
@@ -1451,15 +1466,22 @@ function saveSettings() {
         newInit[key]        = parseInt(document.getElementById(`set-init-${key}`).value) || 0;
         newCutoffStock[key] = parseInt(document.getElementById(`set-cutoff-${key}`).value) || 0;
     }
-    settings.prices       = newPrices;
-    settings.initialStock = newInit;
+    settings.prices        = newPrices;
+    settings.initialStock  = newInit;
     settings.historyCutoff = document.getElementById('set-cutoff-date').value || settings.historyCutoff;
     settings.cutoffStock   = newCutoffStock;
 
     const keyInput = document.getElementById('set-cloud-key').value.trim();
     if (keyInput) setCloudKey(keyInput);
 
-    saveToStorage();
+    // Zaznamenat timestamp nastavení HNED — než přijde jakýkoliv cloud pull
+    safeSet(SETTINGS_TS_KEY, new Date().toISOString());
+    safeSet(SETTINGS_KEY, JSON.stringify(settings));
+    safeSet(STORAGE_KEY, JSON.stringify(records));
+
+    // Okamžitý push do cloudu (ne debounced) — nastavení musí dorazit spolehlivě
+    cloudSync();
+
     closeSettings();
     updateUI();
     showToast('Nastavení uloženo', 'success');
