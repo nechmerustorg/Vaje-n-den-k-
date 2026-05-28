@@ -56,6 +56,120 @@
         .sna:focus { border-color:#f59e0b; box-shadow:0 0 0 3px rgba(245,158,11,0.18); }
         .sne:focus { border-color:#10b981; box-shadow:0 0 0 3px rgba(16,185,129,0.18); }
         .sni:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,0.18); }
+
+        /* --- Notifikace nových rezervací --- */
+        .res-bell {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px; height: 36px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.12);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.1s;
+        }
+        .res-bell:hover { background: rgba(255,255,255,0.22); }
+        .res-bell:active { transform: scale(0.94); }
+        .res-bell svg { width: 18px; height: 18px; }
+        .res-bell.has-new {
+            background: #fbbf24;
+            color: #78350f;
+            animation: bell-pulse 1.4s ease-in-out infinite;
+        }
+        .res-bell.has-new svg {
+            animation: bell-swing 1.4s ease-in-out infinite;
+            transform-origin: 50% 10%;
+        }
+        .res-bell-badge {
+            position: absolute;
+            top: -4px; right: -4px;
+            min-width: 18px; height: 18px; padding: 0 5px;
+            border-radius: 9px;
+            background: #dc2626;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 900;
+            line-height: 18px;
+            text-align: center;
+            box-shadow: 0 0 0 2px #b45309;
+        }
+        .res-bell-badge.hidden { display: none; }
+        @keyframes bell-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7); }
+            50%      { box-shadow: 0 0 0 10px rgba(251, 191, 36, 0); }
+        }
+        @keyframes bell-swing {
+            0%, 100% { transform: rotate(0deg); }
+            15%      { transform: rotate(14deg); }
+            30%      { transform: rotate(-12deg); }
+            45%      { transform: rotate(8deg); }
+            60%      { transform: rotate(-6deg); }
+            75%      { transform: rotate(3deg); }
+        }
+
+        .new-orders-banner {
+            background: linear-gradient(90deg, #fee2e2 0%, #fef3c7 100%);
+            border: 2px solid #f59e0b;
+            border-radius: 1rem;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: #7c2d12;
+            font-weight: 700;
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.18);
+            cursor: pointer;
+            animation: banner-slide-shake 0.7s ease-out;
+        }
+        .new-orders-banner:hover { background: linear-gradient(90deg, #fecaca 0%, #fde68a 100%); }
+        .new-orders-banner .nob-icon {
+            font-size: 1.6rem;
+            animation: bell-swing 1.4s ease-in-out infinite;
+            transform-origin: 50% 10%;
+        }
+        @keyframes banner-slide-shake {
+            0%   { transform: translateY(-12px); opacity: 0; }
+            60%  { transform: translateY(0);     opacity: 1; }
+            72%  { transform: translateX(-6px); }
+            84%  { transform: translateX(4px); }
+            100% { transform: translateX(0); }
+        }
+
+        .toast-new-order {
+            background: linear-gradient(90deg, #b45309 0%, #d97706 100%);
+            color: #fff;
+            border: 2px solid #fde68a;
+        }
+
+        /* --- Panel rezervací --- */
+        .res-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 1rem;
+            padding: 1rem 1.25rem;
+            background: #fff;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .res-card:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(0,0,0,0.06); }
+        .res-card.unseen {
+            border-color: #f59e0b;
+            background: linear-gradient(180deg, #fffbeb 0%, #fff 100%);
+            box-shadow: 0 4px 14px rgba(245,158,11,0.18);
+        }
+        .res-card.unseen::before {
+            content: '🔔 NOVÁ';
+            display: inline-block;
+            background: #dc2626;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 900;
+            padding: 2px 8px;
+            border-radius: 999px;
+            margin-right: 0.5rem;
+            letter-spacing: 0.05em;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen pb-16">
@@ -79,6 +193,10 @@
                     <span class="w-2 h-2 rounded-full bg-slate-400"></span>
                     <span id="sync-status-text">offline</span>
                 </span>
+                <button id="reservations-bell" class="res-bell" onclick="openReservationsPanel()" title="Rezervace" aria-label="Rezervace">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22a2.2 2.2 0 0 0 2.2-2H9.8A2.2 2.2 0 0 0 12 22Zm6.5-6V11a6.5 6.5 0 0 0-5-6.32V4a1.5 1.5 0 0 0-3 0v.68A6.5 6.5 0 0 0 5.5 11v5l-1.7 1.7a1 1 0 0 0 .7 1.7h15a1 1 0 0 0 .7-1.7L18.5 16Z"/></svg>
+                    <span id="reservations-count" class="res-bell-badge hidden">0</span>
+                </button>
                 <button onclick="openSettings()" class="bg-amber-800/80 hover:bg-amber-800 text-white px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">Nastavení</button>
                 <button onclick="exportToCSV()" class="bg-amber-800/80 hover:bg-amber-800 text-white px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">Stáhnout CSV</button>
                 <button onclick="openAddModal()" class="bg-white hover:bg-amber-50 text-amber-900 px-6 py-3 rounded-xl text-sm font-extrabold flex items-center gap-2 shadow-lg transition border-2 border-amber-200 hover:border-amber-300 active:scale-95">
@@ -96,6 +214,16 @@
             <span class="flex-1 min-w-0">☁️ <strong>Cloud sync není nastaven</strong> — bez přístupového klíče se data ukládají jen lokálně v tomto prohlížeči.</span>
             <button onclick="openSettings()" class="shrink-0 bg-amber-700 hover:bg-amber-800 text-white font-bold py-1.5 px-4 rounded-xl text-xs transition">Nastavit teď</button>
             <button onclick="dismissSetupBanner()" class="shrink-0 text-amber-500 hover:text-amber-800 font-bold text-lg leading-none px-1" aria-label="Zavřít">×</button>
+        </div>
+
+        <!-- NEW ORDERS BANNER (zobrazí se, pokud existují nepřečtené rezervace) -->
+        <div id="new-orders-banner" class="new-orders-banner" hidden onclick="openReservationsPanel()">
+            <span class="nob-icon">🔔</span>
+            <span class="flex-1 min-w-0">
+                <strong>Nové rezervace: <span id="new-orders-count">0</span></strong>
+                <span class="block text-xs font-normal opacity-80">Klikni pro detail a vyřízení</span>
+            </span>
+            <button type="button" onclick="event.stopPropagation(); markAllReservationsSeen();" class="shrink-0 bg-amber-700 hover:bg-amber-800 text-white font-bold py-1.5 px-3 rounded-lg text-xs transition">Označit za viděné</button>
         </div>
 
         <!-- STATISTIKY (KARTY) -->
@@ -572,6 +700,20 @@
                     </div>
                 </div>
 
+                <!-- NOTIFIKACE REZERVACÍ -->
+                <div>
+                    <h4 class="font-extrabold text-sm text-slate-800 uppercase tracking-wider mb-3 border-b pb-1.5">Notifikace nových rezervací</h4>
+                    <p class="text-xs text-slate-500 mb-3">Polling běží automaticky každých 30 s (vyžaduje vyplněný přístupový klíč výše).</p>
+                    <div class="flex flex-wrap items-center gap-4">
+                        <label class="flex items-center gap-2 text-sm">
+                            <input type="checkbox" id="set-notif-sound" class="w-4 h-4 accent-amber-700">
+                            <span class="font-semibold text-slate-700">Přehrát zvuk při nové rezervaci</span>
+                        </label>
+                        <button type="button" id="btn-request-notif-perm" onclick="requestNotificationPermission()" class="bg-slate-700 hover:bg-slate-800 text-white font-bold py-1.5 px-3 rounded-lg text-xs transition">Povolit notifikace prohlížeče</button>
+                        <span id="notif-perm-status" class="text-xs text-slate-500"></span>
+                    </div>
+                </div>
+
                 <!-- IMPORT / EXPORT -->
                 <div>
                     <h4 class="font-extrabold text-sm text-slate-800 uppercase tracking-wider mb-3 border-b pb-1.5">Záloha do souboru</h4>
@@ -587,6 +729,26 @@
                 <div class="flex justify-end gap-3 pt-4 border-t">
                     <button type="button" onclick="closeSettings()" class="px-4 py-2 border rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-50">Zavřít</button>
                     <button type="button" onclick="saveSettings()" class="px-5 py-2 bg-amber-800 hover:bg-amber-950 text-white font-bold rounded-xl text-xs">Uložit nastavení</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: REZERVACE -->
+    <div id="reservations-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-white rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col">
+            <div class="bg-amber-800 text-white p-5 flex justify-between items-center">
+                <h3 class="font-bold text-lg flex items-center gap-2">🔔 Rezervace <span id="reservations-modal-count" class="text-amber-200 text-sm font-medium"></span></h3>
+                <button onclick="closeReservationsPanel()" class="text-white font-bold text-xl leading-none px-2">×</button>
+            </div>
+            <div id="reservations-list" class="p-6 space-y-3 overflow-y-auto flex-1">
+                <p class="text-sm text-slate-500 text-center py-8">Načítám rezervace…</p>
+            </div>
+            <div class="border-t p-4 flex flex-wrap items-center justify-between gap-2">
+                <span id="reservations-status" class="text-xs text-slate-500"></span>
+                <div class="flex gap-2">
+                    <button type="button" onclick="refreshReservations()" class="px-4 py-2 border rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50">Obnovit</button>
+                    <button type="button" onclick="markAllReservationsSeen()" class="px-5 py-2 bg-amber-800 hover:bg-amber-950 text-white font-bold rounded-xl text-xs">Označit vše za viděné</button>
                 </div>
             </div>
         </div>
@@ -2004,6 +2166,328 @@ function _scheduleAnimation() {
 }
 
 // ============================================================
+// REZERVACE — polling, in-app notifikace
+// ============================================================
+
+// Deník je deployed ze stejného Vercel projektu jako API → same-origin, žádné CORS.
+const RESERVATIONS_API_BASE = '';
+const RESERVATIONS_SEEN_KEY = 'vd_seen_reservation_ids';
+const RESERVATIONS_SOUND_KEY = 'vd_notif_sound_enabled';
+const RESERVATIONS_POLL_MS = 30 * 1000;
+
+const CATEGORY_LABELS_SHORT = {
+    slepM: 'Slepičí M',
+    slepV: 'Slepičí V',
+    zelM: 'Zelená M',
+    zelV: 'Zelená V',
+    krep: 'Křepelčí',
+};
+
+let _reservationsCache = [];
+let _reservationsPollHandle = null;
+let _reservationsLastUnseenCount = 0;
+let _reservationsFirstLoadDone = false;
+
+function getSeenReservationIds() {
+    const raw = safeGet(RESERVATIONS_SEEN_KEY);
+    if (!raw) return new Set();
+    try { return new Set(JSON.parse(raw)); } catch { return new Set(); }
+}
+
+function setSeenReservationIds(set) {
+    safeSet(RESERVATIONS_SEEN_KEY, JSON.stringify([...set]));
+}
+
+function isNotificationSoundEnabled() {
+    const v = safeGet(RESERVATIONS_SOUND_KEY);
+    return v === null ? true : v === '1';
+}
+
+function setNotificationSoundEnabled(enabled) {
+    safeSet(RESERVATIONS_SOUND_KEY, enabled ? '1' : '0');
+}
+
+function playNewOrderSound() {
+    if (!isNotificationSoundEnabled()) return;
+    try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        const ctx = new Ctx();
+        const now = ctx.currentTime;
+        const tones = [
+            { freq: 880, start: 0,    dur: 0.18 },
+            { freq: 1320, start: 0.18, dur: 0.22 },
+        ];
+        for (const t of tones) {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = t.freq;
+            gain.gain.setValueAtTime(0.0001, now + t.start);
+            gain.gain.exponentialRampToValueAtTime(0.25, now + t.start + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + t.start + t.dur);
+            osc.connect(gain).connect(ctx.destination);
+            osc.start(now + t.start);
+            osc.stop(now + t.start + t.dur + 0.02);
+        }
+        setTimeout(() => ctx.close(), 800);
+    } catch (e) {
+        console.warn('sound failed:', e.message);
+    }
+}
+
+function updateNotificationPermissionStatus() {
+    const el = document.getElementById('notif-perm-status');
+    if (!el || !('Notification' in window)) {
+        if (el) el.textContent = 'Prohlížeč nepodporuje notifikace';
+        return;
+    }
+    const map = {
+        granted: '✅ Povoleno',
+        denied:  '❌ Zakázáno (změň v nastavení prohlížeče)',
+        default: '— nepovoleno',
+    };
+    el.textContent = map[Notification.permission] || '';
+}
+
+async function requestNotificationPermission() {
+    if (!('Notification' in window)) {
+        showToast('Prohlížeč nepodporuje notifikace', 'error');
+        return;
+    }
+    try {
+        const result = await Notification.requestPermission();
+        updateNotificationPermissionStatus();
+        if (result === 'granted') showToast('Notifikace povoleny', 'success');
+    } catch (e) {
+        showToast('Nepodařilo se povolit notifikace', 'error');
+    }
+}
+
+function maybeShowBrowserNotification(reservation) {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    try {
+        const items = Object.entries(reservation.items)
+            .map(([k, q]) => `${q}× ${CATEGORY_LABELS_SHORT[k] || k}`)
+            .join(', ');
+        const n = new Notification('🥚 Nová rezervace', {
+            body: `${reservation.customer.name}\n${items}\nKód: ${reservation.pickupCode}`,
+            tag: `res-${reservation.id}`,
+            icon: '/favicon.ico',
+        });
+        n.onclick = () => {
+            window.focus();
+            openReservationsPanel();
+            n.close();
+        };
+    } catch (e) {
+        console.warn('browser notif failed:', e.message);
+    }
+}
+
+function formatItemsHtml(items) {
+    return Object.entries(items)
+        .map(([k, q]) => `<span class="inline-block bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded-md text-xs mr-1 mb-1">${q}× ${CATEGORY_LABELS_SHORT[k] || k}</span>`)
+        .join('');
+}
+
+function formatRelativeTime(iso) {
+    const diffMs = Date.now() - new Date(iso).getTime();
+    const mins = Math.round(diffMs / 60000);
+    if (mins < 1) return 'právě teď';
+    if (mins < 60) return `před ${mins} min`;
+    const hrs = Math.round(mins / 60);
+    if (hrs < 24) return `před ${hrs} h`;
+    return new Date(iso).toLocaleString('cs-CZ');
+}
+
+function renderReservationsList() {
+    const listEl = document.getElementById('reservations-list');
+    const countEl = document.getElementById('reservations-modal-count');
+    if (!listEl) return;
+
+    if (_reservationsCache.length === 0) {
+        listEl.innerHTML = '<p class="text-sm text-slate-500 text-center py-8">Žádné aktivní rezervace.</p>';
+        if (countEl) countEl.textContent = '';
+        return;
+    }
+
+    const seen = getSeenReservationIds();
+    if (countEl) countEl.textContent = `(${_reservationsCache.length})`;
+
+    const html = _reservationsCache.map(r => {
+        const isUnseen = !seen.has(r.id);
+        const phoneLink = r.customer.phone
+            ? `<a href="tel:${r.customer.phone.replace(/\s+/g, '')}" class="text-amber-700 hover:underline font-semibold">${r.customer.phone}</a>`
+            : '';
+        const emailLink = r.customer.email
+            ? `<a href="mailto:${r.customer.email}" class="text-slate-600 hover:underline">${r.customer.email}</a>`
+            : '';
+        const contact = [phoneLink, emailLink].filter(Boolean).join(' · ') || '<span class="text-slate-400">bez kontaktu</span>';
+        const note = r.customer.note
+            ? `<p class="text-xs text-slate-500 mt-2 italic">„${r.customer.note}"</p>`
+            : '';
+        const price = r.totalKc ? `<span class="text-xs font-bold text-emerald-700">${r.totalKc} Kč</span>` : '';
+        return `
+            <div class="res-card ${isUnseen ? 'unseen' : ''}">
+                <div class="flex flex-wrap justify-between items-start gap-2 mb-2">
+                    <div>
+                        <div class="font-bold text-slate-800">${r.customer.name}</div>
+                        <div class="text-xs text-slate-500">${formatRelativeTime(r.createdAt)} · kód <span class="font-mono font-bold text-amber-800">${r.pickupCode}</span></div>
+                    </div>
+                    ${price}
+                </div>
+                <div class="mb-2">${formatItemsHtml(r.items)}</div>
+                <div class="text-xs">${contact}</div>
+                ${note}
+            </div>
+        `;
+    }).join('');
+
+    listEl.innerHTML = html;
+}
+
+function updateReservationsBadge() {
+    const seen = getSeenReservationIds();
+    const unseenCount = _reservationsCache.filter(r => !seen.has(r.id)).length;
+
+    const bell = document.getElementById('reservations-bell');
+    const badge = document.getElementById('reservations-count');
+    const banner = document.getElementById('new-orders-banner');
+    const bannerCount = document.getElementById('new-orders-count');
+
+    if (badge) {
+        if (unseenCount > 0) {
+            badge.textContent = unseenCount > 99 ? '99+' : String(unseenCount);
+            badge.classList.remove('hidden');
+            bell?.classList.add('has-new');
+        } else {
+            badge.classList.add('hidden');
+            bell?.classList.remove('has-new');
+        }
+    }
+    if (banner) {
+        if (unseenCount > 0) {
+            banner.hidden = false;
+            if (bannerCount) bannerCount.textContent = String(unseenCount);
+        } else {
+            banner.hidden = true;
+        }
+    }
+
+    return unseenCount;
+}
+
+async function fetchReservations() {
+    const key = getCloudKey();
+    if (!key) return null;
+    const url = `${RESERVATIONS_API_BASE}/api/reservations?key=${encodeURIComponent(key)}`;
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return Array.isArray(data.reservations) ? data.reservations : [];
+}
+
+async function pollReservations(opts = {}) {
+    const { silent = false } = opts;
+    const key = getCloudKey();
+    const statusEl = document.getElementById('reservations-status');
+
+    if (!key) {
+        if (statusEl) statusEl.textContent = 'Vlož přístupový klíč v Nastavení.';
+        const listEl = document.getElementById('reservations-list');
+        if (listEl) listEl.innerHTML = '<p class="text-sm text-slate-500 text-center py-8">Vlož přístupový klíč v Nastavení a polling se rozjede.</p>';
+        return;
+    }
+
+    try {
+        const reservations = await fetchReservations();
+        if (!reservations) return;
+
+        const prevIds = new Set(_reservationsCache.map(r => r.id));
+        _reservationsCache = reservations.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
+        const seen = getSeenReservationIds();
+        const unseen = _reservationsCache.filter(r => !seen.has(r.id));
+
+        // Při úplně prvním načtení po otevření stránky neberme jako "nové" rezervace,
+        // které už existovaly před načtením a uživatel je nikdy neviděl — jen je obarvíme
+        // jako "unseen" v panelu. Zvuk/notifikace pouštíme jen pro skutečně nově příchozí.
+        const freshlyAdded = _reservationsFirstLoadDone
+            ? unseen.filter(r => !prevIds.has(r.id))
+            : [];
+
+        renderReservationsList();
+        const unseenCount = updateReservationsBadge();
+
+        if (freshlyAdded.length > 0) {
+            playNewOrderSound();
+            showToast(`🔔 ${freshlyAdded.length} ${freshlyAdded.length === 1 ? 'nová rezervace' : 'nových rezervací'}`, 'new-order');
+            for (const r of freshlyAdded.slice(0, 3)) maybeShowBrowserNotification(r);
+        }
+
+        _reservationsLastUnseenCount = unseenCount;
+        _reservationsFirstLoadDone = true;
+
+        if (statusEl) {
+            statusEl.textContent = `Poslední kontrola: ${new Date().toLocaleTimeString('cs-CZ')}`;
+        }
+    } catch (e) {
+        if (!silent) console.warn('reservations poll error:', e.message);
+        if (statusEl) statusEl.textContent = `Chyba: ${e.message}`;
+    }
+}
+
+function startReservationsPolling() {
+    if (_reservationsPollHandle) return;
+    pollReservations();
+    _reservationsPollHandle = setInterval(() => {
+        if (document.hidden) return;
+        pollReservations({ silent: true });
+    }, RESERVATIONS_POLL_MS);
+
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) pollReservations({ silent: true });
+    });
+}
+
+function openReservationsPanel() {
+    document.getElementById('reservations-modal')?.classList.remove('hidden');
+    renderReservationsList();
+    pollReservations();
+}
+
+function closeReservationsPanel() {
+    document.getElementById('reservations-modal')?.classList.add('hidden');
+}
+
+function refreshReservations() {
+    pollReservations();
+}
+
+function markAllReservationsSeen() {
+    const seen = getSeenReservationIds();
+    for (const r of _reservationsCache) seen.add(r.id);
+    setSeenReservationIds(seen);
+    renderReservationsList();
+    updateReservationsBadge();
+}
+
+// Toast variant pro novou rezervaci (delší fade-out, jiná barva).
+const _origShowToast = showToast;
+showToast = function (message, type = 'info') {
+    if (type === 'new-order') {
+        const toast = document.getElementById('toast');
+        if (!toast) return;
+        toast.textContent = message;
+        toast.className = 'toast toast-new-order show';
+        setTimeout(() => toast.classList.remove('show'), 4500);
+        return;
+    }
+    _origShowToast(message, type);
+};
+
+// ============================================================
 // INIT
 // ============================================================
 
@@ -2015,9 +2499,29 @@ window.addEventListener('DOMContentLoaded', () => {
     updateUI();
     // Non-blocking auto-sync: porovná cloud vs. localStorage, stáhne pokud cloud novější
     autoSyncOnStartup();
+    // Polling rezervací (pouze pokud máme cloud key — fce sama si to zkontroluje)
+    startReservationsPolling();
     // Zvířátka spustit až po 5 s (ať neruší první render)
     setTimeout(_scheduleAnimation, 5000);
 });
+
+// Settings hook — sync checkbox + permission status při otevření nastavení.
+const _origOpenSettings = openSettings;
+openSettings = function () {
+    _origOpenSettings();
+    const soundCb = document.getElementById('set-notif-sound');
+    if (soundCb) soundCb.checked = isNotificationSoundEnabled();
+    updateNotificationPermissionStatus();
+};
+
+const _origSaveSettings = saveSettings;
+saveSettings = function () {
+    const soundCb = document.getElementById('set-notif-sound');
+    if (soundCb) setNotificationSoundEnabled(soundCb.checked);
+    _origSaveSettings();
+    // Po uložení klíče může polling konečně začít.
+    if (getCloudKey()) pollReservations({ silent: true });
+};
 
 // Expose pro inline onclick
 window.openAddModal = openAddModal;
@@ -2040,6 +2544,11 @@ window.toggleStats = toggleStats;
 window.dismissSetupBanner = dismissSetupBanner;
 window.stepVal = stepVal;
 window.openAddSaleToday = openAddSaleToday;
+window.openReservationsPanel = openReservationsPanel;
+window.closeReservationsPanel = closeReservationsPanel;
+window.refreshReservations = refreshReservations;
+window.markAllReservationsSeen = markAllReservationsSeen;
+window.requestNotificationPermission = requestNotificationPermission;
 
 </script>
 </body>
