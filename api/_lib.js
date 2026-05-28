@@ -5,7 +5,7 @@ import { kv } from '@vercel/kv';
 
 export const STORE_KEY = 'eggdiary:data';
 export const RESERVATIONS_SET_KEY = 'eggdiary:reservations';
-export const RESERVATION_TTL_SECONDS = 4 * 60 * 60; // 4 hodiny
+export const RESERVATION_TTL_SECONDS = 24 * 60 * 60; // 24 hodin
 export const CATEGORY_KEYS = ['slepM', 'slepV', 'zelM', 'zelV', 'krep'];
 
 const DEFAULT_STOCK = { slepM: 0, slepV: 0, zelM: 0, zelV: 0, krep: 0 };
@@ -77,8 +77,8 @@ export function setCorsHeaders(res, allowedOrigin) {
     // Stock je čistě read-only veřejný endpoint → "*" je v pohodě.
     // Reserve dostane konkrétní origin.
     res.setHeader('Access-Control-Allow-Origin', allowedOrigin || '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Access-Key');
     res.setHeader('Access-Control-Max-Age', '86400');
 }
 
