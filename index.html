@@ -816,33 +816,6 @@
                     </div>
                 </div>
 
-                <!-- POČÁTEČNÍ STAV -->
-                <div>
-                    <h4 class="font-extrabold text-sm text-slate-800 uppercase tracking-wider mb-3 border-b pb-1.5">Počáteční stav skladu (k 31.12.2025)</h4>
-                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                        <div>
-                            <label class="block text-[10px] uppercase font-bold text-slate-400">Slep M</label>
-                            <input type="number" id="set-init-slepM" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] uppercase font-bold text-slate-400">Slep V</label>
-                            <input type="number" id="set-init-slepV" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] uppercase font-bold text-slate-400">Zelená M</label>
-                            <input type="number" id="set-init-zelM" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] uppercase font-bold text-slate-400">Zelená V</label>
-                            <input type="number" id="set-init-zelV" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] uppercase font-bold text-slate-400">Křepelčí</label>
-                            <input type="number" id="set-init-krep" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
-                        </div>
-                    </div>
-                </div>
-
                 <!-- UZÁVĚRKA HISTORIE -->
                 <div>
                     <h4 class="font-extrabold text-sm text-slate-800 uppercase tracking-wider mb-3 border-b pb-1.5">Uzávěrka historie — od kdy se počítá ostře</h4>
@@ -1894,7 +1867,6 @@ function _updateCutoffHint() {
 function openSettings() {
     ['slepM','slepV','zelM','zelV','krep'].forEach(k => {
         document.getElementById(`set-price-${k}`).value = settings.prices[k];
-        document.getElementById(`set-init-${k}`).value = settings.initialStock[k];
     });
     const key = getCloudKey();
     if (key) document.getElementById('set-cloud-key').value = key;
@@ -1915,14 +1887,14 @@ function closeSettings() {
 }
 
 function saveSettings() {
-    const newPrices = {}, newInit = {}, newCutoffStock = {};
+    const newPrices = {}, newCutoffStock = {};
     for (const { key } of CATEGORIES) {
         newPrices[key]      = parseFloat(document.getElementById(`set-price-${key}`).value) || 0;
-        newInit[key]        = parseInt(document.getElementById(`set-init-${key}`).value) || 0;
         newCutoffStock[key] = parseInt(document.getElementById(`set-cutoff-${key}`).value) || 0;
     }
     settings.prices        = newPrices;
-    settings.initialStock  = newInit;
+    // initialStock (=stav skladu k 31.12.) zůstává beze změny — slouží jen interně
+    // pro tlačítko „Přepočítat stav skladu z historie" (replay záznamů od počátku).
     settings.historyCutoff = document.getElementById('set-cutoff-date').value || settings.historyCutoff;
     settings.cutoffStock   = newCutoffStock;
 
