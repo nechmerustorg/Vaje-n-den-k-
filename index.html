@@ -144,31 +144,205 @@
             border: 2px solid #fde68a;
         }
 
-        /* --- Panel rezervací --- */
+        /* --- Sekce a karty rezervací --- */
         .res-card {
+            position: relative;
             border: 1px solid #e2e8f0;
+            border-left: 6px solid #cbd5e1;
             border-radius: 1rem;
             padding: 1rem 1.25rem;
             background: #fff;
-            transition: transform 0.15s, box-shadow 0.15s;
+            transition: transform 0.15s, box-shadow 0.15s, border-color 0.2s;
         }
         .res-card:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(0,0,0,0.06); }
-        .res-card.unseen {
-            border-color: #f59e0b;
+
+        /* Stav: nová (active, není ready) */
+        .res-card.is-new {
+            border-left-color: #f59e0b;
             background: linear-gradient(180deg, #fffbeb 0%, #fff 100%);
-            box-shadow: 0 4px 14px rgba(245,158,11,0.18);
         }
-        .res-card.unseen::before {
-            content: '🔔 NOVÁ';
-            display: inline-block;
-            background: #dc2626;
-            color: #fff;
-            font-size: 10px;
+        .res-card.is-new.unseen {
+            box-shadow: 0 4px 14px rgba(245,158,11,0.22);
+        }
+
+        /* Stav: připravena k výdeji */
+        .res-card.is-ready {
+            border-left-color: #10b981;
+            background: linear-gradient(180deg, #ecfdf5 0%, #fff 100%);
+        }
+
+        /* Stav: brzy vyprší */
+        .res-card.is-expiring {
+            border-left-color: #dc2626 !important;
+            animation: expiring-pulse 1.8s ease-in-out infinite;
+        }
+        @keyframes expiring-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.0); }
+            50%      { box-shadow: 0 0 0 6px rgba(220,38,38,0.18); }
+        }
+
+        /* Status pill v rohu karty */
+        .res-status-pill {
+            position: absolute;
+            top: 0.65rem; right: 0.75rem;
+            font-size: 9px;
             font-weight: 900;
-            padding: 2px 8px;
+            letter-spacing: 0.06em;
+            padding: 3px 8px;
             border-radius: 999px;
-            margin-right: 0.5rem;
-            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+        .pill-new      { background: #fde68a; color: #78350f; }
+        .pill-unseen   { background: #dc2626; color: #fff; }
+        .pill-ready    { background: #10b981; color: #fff; }
+        .pill-expiring { background: #b91c1c; color: #fff; animation: pill-flash 1.6s ease-in-out infinite; }
+        @keyframes pill-flash {
+            0%, 100% { opacity: 1; }
+            50%      { opacity: 0.5; }
+        }
+
+        .res-pickup-code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 1.6rem;
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            color: #92400e;
+            background: #fef3c7;
+            padding: 0.15rem 0.7rem;
+            border-radius: 0.5rem;
+            border: 2px dashed #fcd34d;
+        }
+        .res-card.is-ready .res-pickup-code {
+            color: #065f46;
+            background: #d1fae5;
+            border-color: #6ee7b7;
+        }
+
+        .res-item-pill {
+            display: inline-block;
+            background: #fef3c7;
+            color: #78350f;
+            font-weight: 800;
+            font-size: 0.78rem;
+            padding: 2px 9px;
+            border-radius: 8px;
+            margin: 0 4px 4px 0;
+        }
+        .res-item-pill .qty { color: #b45309; font-weight: 900; }
+
+        .res-owner-note {
+            background: #fffbeb;
+            border: 1px dashed #fcd34d;
+            border-radius: 0.6rem;
+            padding: 0.45rem 0.7rem;
+            color: #78350f;
+            font-size: 0.78rem;
+            font-style: italic;
+        }
+        .res-card.is-ready .res-owner-note {
+            background: #ecfdf5;
+            border-color: #6ee7b7;
+            color: #065f46;
+        }
+
+        .res-action-btn {
+            font-size: 0.72rem;
+            font-weight: 800;
+            padding: 0.4rem 0.7rem;
+            border-radius: 0.55rem;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: filter 0.12s, transform 0.08s, background 0.12s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .res-action-btn:active { transform: scale(0.96); }
+        .res-action-btn:disabled { opacity: 0.5; cursor: wait; }
+        .res-btn-ready   { background: #10b981; color: #fff; }
+        .res-btn-ready:hover { background: #059669; }
+        .res-btn-unready { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
+        .res-btn-unready:hover { background: #e2e8f0; }
+        .res-btn-edit    { background: #f1f5f9; color: #1e293b; border-color: #cbd5e1; }
+        .res-btn-edit:hover { background: #e2e8f0; }
+        .res-btn-cancel  { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+        .res-btn-cancel:hover { background: #fecaca; }
+
+        /* Filtr chips */
+        .res-filter {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            background: #f1f5f9;
+            color: #475569;
+            font-size: 0.78rem;
+            font-weight: 800;
+            padding: 0.35rem 0.85rem;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.12s;
+        }
+        .res-filter:hover { background: #e2e8f0; }
+        .res-filter.active {
+            background: #1e293b;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        }
+        .res-filter .filter-count {
+            background: rgba(255,255,255,0.85);
+            color: #1e293b;
+            border-radius: 999px;
+            padding: 0 6px;
+            font-size: 0.7rem;
+            font-weight: 900;
+        }
+        .res-filter:not(.active) .filter-count { background: #cbd5e1; color: #475569; }
+
+        /* Sekce rezervací — kontejner */
+        .res-section {
+            border-radius: 1rem;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            overflow: hidden;
+        }
+        .res-section-header {
+            background: linear-gradient(90deg, #ea580c 0%, #b45309 100%);
+            color: #fff;
+            padding: 0.85rem 1.25rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.6rem;
+            cursor: pointer;
+            user-select: none;
+        }
+        .res-section-header h2 {
+            font-size: 0.95rem;
+            font-weight: 900;
+            letter-spacing: 0.02em;
+        }
+        .res-section-content {
+            transition: max-height 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease;
+            max-height: 6000px;
+            opacity: 1;
+            overflow: hidden;
+        }
+        .res-section-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+        }
+        .res-empty {
+            text-align: center;
+            padding: 2.5rem 1rem;
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+        .res-empty .emoji {
+            display: block;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
         }
     </style>
 </head>
@@ -403,6 +577,31 @@
                     </svg>
                     <span id="today-btn-sale-label">Přidat prodej</span>
                 </button>
+            </div>
+        </section>
+
+        <!-- REZERVACE — sekce pro správu aktivních rezervací -->
+        <section id="reservations-section" class="res-section" hidden>
+            <div class="res-section-header" onclick="toggleReservationsSection()">
+                <span style="font-size:1.25rem;">🧺</span>
+                <h2>Rezervace</h2>
+                <span id="res-section-summary" class="text-xs font-bold opacity-90"></span>
+                <span class="ml-auto flex items-center gap-2">
+                    <button type="button" onclick="event.stopPropagation(); refreshReservations();" class="text-white/85 hover:text-white text-xs font-bold px-2 py-1 rounded-md bg-white/15 hover:bg-white/25 transition">Obnovit</button>
+                    <svg id="res-section-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 transition-transform"><path d="M6 9l6 6 6-6"/></svg>
+                </span>
+            </div>
+            <div id="res-section-content" class="res-section-content">
+                <div class="px-5 pt-4 pb-2 flex flex-wrap items-center gap-2 border-b border-slate-100" id="res-filter-bar">
+                    <button type="button" class="res-filter active" data-filter="all">Vše <span class="filter-count" data-count="all">0</span></button>
+                    <button type="button" class="res-filter" data-filter="new">🔔 Nové <span class="filter-count" data-count="new">0</span></button>
+                    <button type="button" class="res-filter" data-filter="ready">✓ Připravené <span class="filter-count" data-count="ready">0</span></button>
+                    <button type="button" class="res-filter" data-filter="expiring">⏱ Brzy vyprší <span class="filter-count" data-count="expiring">0</span></button>
+                    <span id="res-last-checked" class="ml-auto text-[10px] text-slate-400 font-semibold"></span>
+                </div>
+                <div id="res-section-list" class="px-5 py-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <p class="res-empty col-span-full"><span class="emoji">🥚</span>Žádné aktivní rezervace.</p>
+                </div>
             </div>
         </section>
 
@@ -2287,7 +2486,7 @@ function maybeShowBrowserNotification(reservation) {
 
 function formatItemsHtml(items) {
     return Object.entries(items)
-        .map(([k, q]) => `<span class="inline-block bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded-md text-xs mr-1 mb-1">${q}× ${CATEGORY_LABELS_SHORT[k] || k}</span>`)
+        .map(([k, q]) => `<span class="res-item-pill"><span class="qty">${q}×</span> ${CATEGORY_LABELS_SHORT[k] || k}</span>`)
         .join('');
 }
 
@@ -2301,7 +2500,186 @@ function formatRelativeTime(iso) {
     return new Date(iso).toLocaleString('cs-CZ');
 }
 
+function formatTimeUntil(iso) {
+    const diffMs = new Date(iso).getTime() - Date.now();
+    if (diffMs < 0) return 'právě vypršela';
+    const mins = Math.round(diffMs / 60000);
+    if (mins < 60) return `za ${mins} min`;
+    const hrs = Math.round(mins / 60);
+    if (hrs < 24) return `za ${hrs} h`;
+    return new Date(iso).toLocaleString('cs-CZ');
+}
+
+const EXPIRING_THRESHOLD_MS = 60 * 60 * 1000; // 60 minut
+
+function isReservationReady(r) { return Boolean(r.readyAt); }
+function isReservationExpiring(r) {
+    const left = new Date(r.expiresAt).getTime() - Date.now();
+    return left > 0 && left < EXPIRING_THRESHOLD_MS;
+}
+
+function escapeHtml(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+// Hlavní továrna na kartu rezervace — používá se v sekci i v modalu.
+function renderReservationCard(r, opts = {}) {
+    const { compact = false } = opts;
+    const seen = getSeenReservationIds();
+    const isUnseen = !seen.has(r.id);
+    const ready = isReservationReady(r);
+    const expiring = isReservationExpiring(r);
+
+    const stateClasses = [
+        'res-card',
+        ready ? 'is-ready' : 'is-new',
+        expiring ? 'is-expiring' : '',
+        isUnseen && !ready ? 'unseen' : '',
+    ].filter(Boolean).join(' ');
+
+    let pill;
+    if (expiring) {
+        pill = `<span class="res-status-pill pill-expiring">⏱ ${formatTimeUntil(r.expiresAt)}</span>`;
+    } else if (ready) {
+        pill = `<span class="res-status-pill pill-ready">✓ K výdeji</span>`;
+    } else if (isUnseen) {
+        pill = `<span class="res-status-pill pill-unseen">🔔 Nová</span>`;
+    } else {
+        pill = `<span class="res-status-pill pill-new">Aktivní</span>`;
+    }
+
+    const phoneLink = r.customer.phone
+        ? `<a href="tel:${r.customer.phone.replace(/\s+/g, '')}" class="text-amber-700 hover:underline font-bold">${escapeHtml(r.customer.phone)}</a>`
+        : '';
+    const emailLink = r.customer.email
+        ? `<a href="mailto:${r.customer.email}" class="text-slate-600 hover:underline">${escapeHtml(r.customer.email)}</a>`
+        : '';
+    const contact = [phoneLink, emailLink].filter(Boolean).join(' · ')
+        || '<span class="text-slate-400 text-xs">bez kontaktu</span>';
+
+    const customerNote = r.customer.note
+        ? `<p class="text-xs text-slate-600 mt-2 italic">„${escapeHtml(r.customer.note)}"</p>`
+        : '';
+    const ownerNote = r.ownerNote
+        ? `<div class="res-owner-note mt-2">📝 ${escapeHtml(r.ownerNote)}</div>`
+        : '';
+
+    const price = r.totalKc
+        ? `<span class="text-sm font-extrabold text-emerald-700">${r.totalKc} Kč</span>`
+        : '';
+
+    const expiresInfo = expiring
+        ? ''
+        : `<span class="text-[10px] text-slate-400 font-semibold">platí ${formatTimeUntil(r.expiresAt)}</span>`;
+
+    const toggleBtn = ready
+        ? `<button type="button" class="res-action-btn res-btn-unready" onclick="toggleReservationReady('${r.id}', false, this)">↩ Vrátit do nových</button>`
+        : `<button type="button" class="res-action-btn res-btn-ready" onclick="toggleReservationReady('${r.id}', true, this)">✓ Připraveno k výdeji</button>`;
+
+    return `
+        <div class="${stateClasses}" data-id="${r.id}">
+            ${pill}
+            <div class="flex items-start gap-3 mb-3">
+                <div class="res-pickup-code">${escapeHtml(r.pickupCode)}</div>
+                <div class="flex-1 min-w-0">
+                    <div class="font-extrabold text-slate-800 truncate" title="${escapeHtml(r.customer.name)}">${escapeHtml(r.customer.name)}</div>
+                    <div class="text-[11px] text-slate-500 font-semibold">${formatRelativeTime(r.createdAt)}</div>
+                </div>
+                ${price}
+            </div>
+            <div class="mb-2">${formatItemsHtml(r.items)}</div>
+            <div class="text-xs mb-1">${contact}</div>
+            ${customerNote}
+            ${ownerNote}
+            <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                ${toggleBtn}
+                <button type="button" class="res-action-btn res-btn-edit" onclick="editReservationOwnerNote('${r.id}')">📝 Poznámka</button>
+                <button type="button" class="res-action-btn res-btn-cancel" onclick="cancelReservation('${r.id}', this)">✕ Zrušit</button>
+                ${expiresInfo}
+            </div>
+        </div>
+    `;
+}
+
+// Stav filtrace v inline sekci.
+let _reservationsFilter = 'all'; // all | new | ready | expiring
+
+function filterReservations(filter) {
+    const seen = getSeenReservationIds();
+    return _reservationsCache.filter(r => {
+        if (filter === 'all') return true;
+        if (filter === 'new') return !isReservationReady(r) && !seen.has(r.id);
+        if (filter === 'ready') return isReservationReady(r);
+        if (filter === 'expiring') return isReservationExpiring(r);
+        return true;
+    });
+}
+
+function setReservationsFilter(filter) {
+    _reservationsFilter = filter;
+    document.querySelectorAll('#res-filter-bar .res-filter').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === filter);
+    });
+    renderReservationsSection();
+}
+
+function renderReservationsSection() {
+    const section = document.getElementById('reservations-section');
+    const list = document.getElementById('res-section-list');
+    const summary = document.getElementById('res-section-summary');
+    if (!section || !list) return;
+
+    const seen = getSeenReservationIds();
+    const total = _reservationsCache.length;
+    const newCount = _reservationsCache.filter(r => !isReservationReady(r) && !seen.has(r.id)).length;
+    const readyCount = _reservationsCache.filter(r => isReservationReady(r)).length;
+    const expiringCount = _reservationsCache.filter(r => isReservationExpiring(r)).length;
+
+    // Counts v chips
+    const setCount = (k, v) => {
+        const el = document.querySelector(`#res-filter-bar [data-count="${k}"]`);
+        if (el) el.textContent = String(v);
+    };
+    setCount('all', total);
+    setCount('new', newCount);
+    setCount('ready', readyCount);
+    setCount('expiring', expiringCount);
+
+    // Hide whole section if no key set (nothing to manage).
+    const hasKey = !!getCloudKey();
+    if (!hasKey) {
+        section.hidden = true;
+        return;
+    }
+    // Skryj sekci úplně pokud není žádná rezervace.
+    section.hidden = total === 0;
+
+    if (summary) {
+        const parts = [];
+        if (newCount > 0) parts.push(`${newCount} ${newCount === 1 ? 'nová' : (newCount < 5 ? 'nové' : 'nových')}`);
+        if (readyCount > 0) parts.push(`${readyCount} připraven${readyCount === 1 ? 'á' : 'é'}`);
+        if (expiringCount > 0) parts.push(`${expiringCount} brzy vyprší`);
+        summary.textContent = parts.length ? `· ${parts.join(' · ')}` : `· ${total} aktivních`;
+    }
+
+    const filtered = filterReservations(_reservationsFilter);
+    if (filtered.length === 0) {
+        list.innerHTML = `<p class="res-empty col-span-full"><span class="emoji">🥚</span>V tomto filtru nic není.</p>`;
+        return;
+    }
+
+    list.innerHTML = filtered.map(r => renderReservationCard(r)).join('');
+
+    const lastEl = document.getElementById('res-last-checked');
+    if (lastEl) lastEl.textContent = `aktualizováno ${new Date().toLocaleTimeString('cs-CZ')}`;
+}
+
 function renderReservationsList() {
+    // Modal — kompaktnější karty, jinak stejné.
     const listEl = document.getElementById('reservations-list');
     const countEl = document.getElementById('reservations-modal-count');
     if (!listEl) return;
@@ -2311,40 +2689,115 @@ function renderReservationsList() {
         if (countEl) countEl.textContent = '';
         return;
     }
-
-    const seen = getSeenReservationIds();
     if (countEl) countEl.textContent = `(${_reservationsCache.length})`;
+    listEl.innerHTML = _reservationsCache.map(r => renderReservationCard(r, { compact: true })).join('');
+}
 
-    const html = _reservationsCache.map(r => {
-        const isUnseen = !seen.has(r.id);
-        const phoneLink = r.customer.phone
-            ? `<a href="tel:${r.customer.phone.replace(/\s+/g, '')}" class="text-amber-700 hover:underline font-semibold">${r.customer.phone}</a>`
-            : '';
-        const emailLink = r.customer.email
-            ? `<a href="mailto:${r.customer.email}" class="text-slate-600 hover:underline">${r.customer.email}</a>`
-            : '';
-        const contact = [phoneLink, emailLink].filter(Boolean).join(' · ') || '<span class="text-slate-400">bez kontaktu</span>';
-        const note = r.customer.note
-            ? `<p class="text-xs text-slate-500 mt-2 italic">„${r.customer.note}"</p>`
-            : '';
-        const price = r.totalKc ? `<span class="text-xs font-bold text-emerald-700">${r.totalKc} Kč</span>` : '';
-        return `
-            <div class="res-card ${isUnseen ? 'unseen' : ''}">
-                <div class="flex flex-wrap justify-between items-start gap-2 mb-2">
-                    <div>
-                        <div class="font-bold text-slate-800">${r.customer.name}</div>
-                        <div class="text-xs text-slate-500">${formatRelativeTime(r.createdAt)} · kód <span class="font-mono font-bold text-amber-800">${r.pickupCode}</span></div>
-                    </div>
-                    ${price}
-                </div>
-                <div class="mb-2">${formatItemsHtml(r.items)}</div>
-                <div class="text-xs">${contact}</div>
-                ${note}
-            </div>
-        `;
-    }).join('');
+function toggleReservationsSection() {
+    const content = document.getElementById('res-section-content');
+    const chevron = document.getElementById('res-section-chevron');
+    if (!content) return;
+    const collapsed = content.classList.toggle('collapsed');
+    if (chevron) chevron.style.transform = collapsed ? 'rotate(-90deg)' : '';
+}
 
-    listEl.innerHTML = html;
+// --- Akce nad rezervací ---
+async function _patchReservation(id, body) {
+    const key = getCloudKey();
+    if (!key) {
+        showToast('Vlož přístupový klíč v Nastavení', 'error');
+        return null;
+    }
+    const r = await fetch(`${RESERVATIONS_API_BASE}/api/reservations/${id}?key=${encodeURIComponent(key)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+    });
+    if (!r.ok) {
+        const t = await r.text().catch(() => '');
+        throw new Error(`HTTP ${r.status}: ${t.slice(0, 120)}`);
+    }
+    return await r.json();
+}
+
+async function _deleteReservation(id) {
+    const key = getCloudKey();
+    if (!key) {
+        showToast('Vlož přístupový klíč v Nastavení', 'error');
+        return false;
+    }
+    const r = await fetch(`${RESERVATIONS_API_BASE}/api/reservations/${id}?key=${encodeURIComponent(key)}`, {
+        method: 'DELETE',
+    });
+    if (!r.ok) {
+        const t = await r.text().catch(() => '');
+        throw new Error(`HTTP ${r.status}: ${t.slice(0, 120)}`);
+    }
+    return true;
+}
+
+async function toggleReservationReady(id, ready, btn) {
+    if (btn) btn.disabled = true;
+    try {
+        const updated = await _patchReservation(id, { ready });
+        if (!updated) return;
+        // Cache update — local-first refresh.
+        const idx = _reservationsCache.findIndex(r => r.id === id);
+        if (idx >= 0) _reservationsCache[idx] = updated;
+        // Jakmile chovatel rezervaci řeší, je viděná.
+        const seen = getSeenReservationIds();
+        seen.add(id);
+        setSeenReservationIds(seen);
+        renderReservationsSection();
+        renderReservationsList();
+        updateReservationsBadge();
+        showToast(ready ? '✓ Označeno jako připraveno k výdeji' : '↩ Vráceno do nových', 'success');
+    } catch (e) {
+        showToast(`Nepovedlo se: ${e.message}`, 'error');
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+
+async function editReservationOwnerNote(id) {
+    const r = _reservationsCache.find(x => x.id === id);
+    if (!r) return;
+    const current = r.ownerNote || '';
+    const next = window.prompt('Privátní poznámka chovatele (jen pro tebe). Prázdné = smazat.', current);
+    if (next === null) return; // cancel
+    try {
+        const updated = await _patchReservation(id, { ownerNote: next.trim() === '' ? null : next });
+        if (!updated) return;
+        const idx = _reservationsCache.findIndex(x => x.id === id);
+        if (idx >= 0) _reservationsCache[idx] = updated;
+        renderReservationsSection();
+        renderReservationsList();
+        showToast('Poznámka uložena', 'success');
+    } catch (e) {
+        showToast(`Nepovedlo se uložit: ${e.message}`, 'error');
+    }
+}
+
+async function cancelReservation(id, btn) {
+    const r = _reservationsCache.find(x => x.id === id);
+    if (!r) return;
+    const confirmed = window.confirm(`Opravdu zrušit rezervaci ${r.pickupCode} (${r.customer.name})?\n\nPoložky se vrátí do dostupného skladu.`);
+    if (!confirmed) return;
+    if (btn) btn.disabled = true;
+    try {
+        await _deleteReservation(id);
+        _reservationsCache = _reservationsCache.filter(x => x.id !== id);
+        // Vyčistit ze seen-set, ať se neukládá zbytečně.
+        const seen = getSeenReservationIds();
+        if (seen.delete(id)) setSeenReservationIds(seen);
+        renderReservationsSection();
+        renderReservationsList();
+        updateReservationsBadge();
+        showToast(`Rezervace ${r.pickupCode} zrušena`, 'success');
+    } catch (e) {
+        showToast(`Nepovedlo se zrušit: ${e.message}`, 'error');
+        if (btn) btn.disabled = false;
+    }
 }
 
 function updateReservationsBadge() {
@@ -2418,6 +2871,7 @@ async function pollReservations(opts = {}) {
             : [];
 
         renderReservationsList();
+        renderReservationsSection();
         const unseenCount = updateReservationsBadge();
 
         if (freshlyAdded.length > 0) {
@@ -2452,6 +2906,20 @@ function startReservationsPolling() {
 }
 
 function openReservationsPanel() {
+    // Pokud existuje inline sekce a má rezervace, scrolluj k ní (primární UI).
+    const section = document.getElementById('reservations-section');
+    if (section && !section.hidden) {
+        // Rozbal, pokud je zabalená.
+        const content = document.getElementById('res-section-content');
+        if (content?.classList.contains('collapsed')) toggleReservationsSection();
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Krátké zvýraznění pro orientaci.
+        section.style.outline = '3px solid #f59e0b';
+        section.style.outlineOffset = '4px';
+        setTimeout(() => { section.style.outline = ''; section.style.outlineOffset = ''; }, 1400);
+        return;
+    }
+    // Fallback: modal (žádné rezervace, nebo není ACCESS_KEY).
     document.getElementById('reservations-modal')?.classList.remove('hidden');
     renderReservationsList();
     pollReservations();
@@ -2470,8 +2938,16 @@ function markAllReservationsSeen() {
     for (const r of _reservationsCache) seen.add(r.id);
     setSeenReservationIds(seen);
     renderReservationsList();
+    renderReservationsSection();
     updateReservationsBadge();
 }
+
+// Klik na filtr chip
+document.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('#res-filter-bar .res-filter');
+    if (!btn) return;
+    setReservationsFilter(btn.dataset.filter);
+});
 
 // Toast variant pro novou rezervaci (delší fade-out, jiná barva).
 const _origShowToast = showToast;
@@ -2549,6 +3025,10 @@ window.closeReservationsPanel = closeReservationsPanel;
 window.refreshReservations = refreshReservations;
 window.markAllReservationsSeen = markAllReservationsSeen;
 window.requestNotificationPermission = requestNotificationPermission;
+window.toggleReservationsSection = toggleReservationsSection;
+window.toggleReservationReady = toggleReservationReady;
+window.editReservationOwnerNote = editReservationOwnerNote;
+window.cancelReservation = cancelReservation;
 
 </script>
 </body>
