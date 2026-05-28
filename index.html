@@ -548,8 +548,8 @@ const SYNC_TIMESTAMP_KEY = 'egg_tracker_v4_sync_at'; // timestamp posledního ú
 const DEFAULT_SETTINGS = {
     prices: { slepM: 4.5, slepV: 5.5, zelM: 6.0, zelV: 6.5, krep: 3.0 },
     initialStock: { slepM: 3, slepV: 53, zelM: 0, zelV: 0, krep: 81 },
-    historyCutoff: '2026-05-24',  // záznamy ≤ tohoto data jsou orientační a jdou mimo validaci/statistiky
-    cutoffStock: null             // stav skladu k ránu prvního ostrého dne; null = bude auto-spočítáno
+    historyCutoff: '2026-05-22',  // záznamy ≤ tohoto data jsou orientační a jdou mimo validaci/statistiky
+    cutoffStock: { slepM: 3, slepV: 0, zelM: 1, zelV: 1, krep: 7 }  // stav skladu ráno 23.5.2026
 };
 
 const CATEGORIES = [
@@ -714,9 +714,7 @@ const SEED_RECORDS_OLD = [
     { date: '2026-05-19', colM: 1, colV: 38, colGR1: 3, colGR2: 0, colKc: 4, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
     { date: '2026-05-20', colM: 2, colV: 30, colGR1: 4, colGR2: 0, colKc: 2, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
     { date: '2026-05-21', colM: 1, colV: 21, colGR1: 1, colGR2: 0, colKc: 4, selM: 0, selV: 230, selGR1: 0, selGR2: 0, selKc: 50 },
-    { date: '2026-05-22', colM: 4, colV: 23, colGR1: 3, colGR2: 0, colKc: 2, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-05-23', colM: 0, colV: 20, colGR1: 1, colGR2: 0, colKc: 2, selM: 41, selV: 76, selGR1: 25, selGR2: 0, selKc: 0 },
-    { date: '2026-05-24', colM: 2, colV: 18, colGR1: 4, colGR2: 0, colKc: 2, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 }
+    { date: '2026-05-22', colM: 4, colV: 23, colGR1: 3, colGR2: 0, colKc: 2, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 }
 ];
 
 // ============================================================
@@ -870,6 +868,18 @@ function showToast(message, type = 'info') {
 // PERSISTENCE
 // ============================================================
 
+function _migrateSettings(s) {
+    // Migrace: starý cutoff byl 2026-05-24 (obsahoval chybná data z papírové evidence)
+    if (s.historyCutoff === '2026-05-24') {
+        s.historyCutoff = '2026-05-22';
+        s.cutoffStock   = { slepM: 3, slepV: 0, zelM: 1, zelV: 1, krep: 7 };
+    }
+    // Fallback pro případ chybějícího cutoffStock
+    if (s.historyCutoff && !s.cutoffStock) {
+        s.cutoffStock = computeStockAtDate(records, s.initialStock, s.historyCutoff);
+    }
+}
+
 function saveToStorage() {
     safeSet(STORAGE_KEY, JSON.stringify(records));
     safeSet(SETTINGS_KEY, JSON.stringify(settings));
@@ -903,11 +913,7 @@ function loadFromStorage() {
             };
         } catch (e) { /* keep defaults */ }
     }
-    // Auto-compute cutoffStock při prvním spuštění (nebo po resetu)
-    if (settings.historyCutoff && !settings.cutoffStock) {
-        settings.cutoffStock = computeStockAtDate(records, settings.initialStock, settings.historyCutoff);
-        safeSet(SETTINGS_KEY, JSON.stringify(settings)); // persists without triggering cloud sync
-    }
+    _migrateSettings(settings);
 }
 
 // ============================================================
@@ -986,9 +992,7 @@ async function cloudRestore() {
                 cutoffStock: json.data.settings.cutoffStock ?? null
             };
         }
-        if (settings.historyCutoff && !settings.cutoffStock) {
-            settings.cutoffStock = computeStockAtDate(records, settings.initialStock, settings.historyCutoff);
-        }
+        _migrateSettings(settings);
         safeSet(STORAGE_KEY, JSON.stringify(records));
         safeSet(SETTINGS_KEY, JSON.stringify(settings));
         safeSet(SYNC_TIMESTAMP_KEY, json.data.savedAt || new Date().toISOString());
@@ -1030,9 +1034,7 @@ async function autoSyncOnStartup() {
                     historyCutoff: json.data.settings.historyCutoff ?? DEFAULT_SETTINGS.historyCutoff,
                     cutoffStock:   json.data.settings.cutoffStock   ?? null
                 };
-                if (settings.historyCutoff && !settings.cutoffStock) {
-                    settings.cutoffStock = computeStockAtDate(records, settings.initialStock, settings.historyCutoff);
-                }
+                _migrateSettings(settings);
             }
             safeSet(STORAGE_KEY,        JSON.stringify(records));
             safeSet(SETTINGS_KEY,       JSON.stringify(settings));
