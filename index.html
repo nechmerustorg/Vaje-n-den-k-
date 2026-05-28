@@ -42,6 +42,20 @@
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(0,0,0,0.08);
         }
+
+        /* Stepper widget */
+        .sb { display:flex; align-items:center; justify-content:center; width:100%; padding:9px 0; border-radius:10px; font-weight:900; font-size:15px; cursor:pointer; border:none; transition:filter 0.12s, transform 0.08s; user-select:none; }
+        .sb:active { transform:scale(0.93); filter:brightness(0.88); }
+        .sp10 { background:#14532d; color:#fff; }
+        .sp1  { background:#bbf7d0; color:#14532d; }
+        .sm1  { background:#fee2e2; color:#991b1b; }
+        .sm10 { background:#991b1b; color:#fff; }
+        .sn   { width:100%; border:2px solid #e2e8f0; border-radius:10px; text-align:center; font-weight:900; font-size:26px; padding:6px 2px; background:#fff; outline:none; -moz-appearance:textfield; }
+        .sn::-webkit-outer-spin-button, .sn::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+        .sn:focus { border-color:#f59e0b; box-shadow:0 0 0 3px rgba(245,158,11,0.18); }
+        .sna:focus { border-color:#f59e0b; box-shadow:0 0 0 3px rgba(245,158,11,0.18); }
+        .sne:focus { border-color:#10b981; box-shadow:0 0 0 3px rgba(16,185,129,0.18); }
+        .sni:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,0.18); }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen pb-16">
@@ -250,7 +264,7 @@
 
     <!-- MODAL: ZÁZNAM -->
     <div id="record-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
-        <div class="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div class="bg-white rounded-2xl w-full max-w-4xl overflow-hidden shadow-2xl max-h-[90vh] overflow-y-auto">
             <div class="bg-amber-800 text-white p-5 flex justify-between items-center">
                 <h3 class="font-bold text-lg" id="modal-title">Zapsat nový den</h3>
                 <button onclick="closeAddModal()" class="text-white font-bold text-xl leading-none px-2">×</button>
@@ -259,69 +273,122 @@
                 <input type="hidden" id="edit-original-date">
                 <div>
                     <label class="block text-xs font-bold text-slate-500 mb-1">Datum</label>
-                    <input type="date" id="form-date" required class="w-full border rounded-xl p-2.5 font-semibold text-slate-800">
+                    <input type="date" id="form-date" required class="w-full border rounded-xl p-2.5 font-semibold text-slate-800 text-base">
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <!-- SNESENO -->
-                    <div class="bg-amber-50/40 p-4 rounded-xl border border-amber-100 space-y-3">
-                        <h4 class="font-extrabold text-xs text-amber-900 uppercase tracking-wider">Sneseno</h4>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-500">Slepičí Malá</label>
-                                <input type="number" id="form-slepM" min="0" value="0" class="w-full border rounded-lg p-2 font-bold text-center">
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-500">Slepičí Velká</label>
-                                <input type="number" id="form-slepV" min="0" value="0" class="w-full border rounded-lg p-2 font-bold text-center">
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-500">Zelená Malá</label>
-                                <input type="number" id="form-zelM" min="0" value="0" class="w-full border rounded-lg p-2 font-bold text-center">
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-500">Zelená Velká</label>
-                                <input type="number" id="form-zelV" min="0" value="0" class="w-full border rounded-lg p-2 font-bold text-center">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold text-slate-500 block mb-0.5">Křepelčí</label>
-                            <input type="number" id="form-krep" min="0" value="0" class="w-full border rounded-lg p-2 font-bold text-center">
-                        </div>
+
+                <!-- SNESENO -->
+                <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="text-xl">🥚</span>
+                        <h4 class="font-extrabold text-sm text-amber-900 uppercase tracking-wider">Sneseno dnes</h4>
                     </div>
-                    <!-- PRODÁNO -->
-                    <div class="bg-blue-50/30 p-4 rounded-xl border border-blue-100 space-y-3">
-                        <h4 class="font-extrabold text-xs text-blue-900 uppercase tracking-wider">Prodáno</h4>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-500">Slepičí Malá</label>
-                                <input type="number" id="form-sold_slepM" min="0" value="0" class="w-full border rounded-lg p-2 font-bold text-center">
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-500">Slepičí Velká</label>
-                                <input type="number" id="form-sold_slepV" min="0" value="0" class="w-full border rounded-lg p-2 font-bold text-center">
-                            </div>
+                    <div class="grid grid-cols-5 gap-3">
+                        <!-- Slepičí M -->
+                        <div class="flex flex-col items-center gap-1.5">
+                            <span class="text-[11px] font-extrabold text-amber-800 uppercase tracking-wide text-center leading-tight">Slepičí<br>Malá</span>
+                            <button type="button" onclick="stepVal('form-slepM',10)" class="sb sp10">+10</button>
+                            <button type="button" onclick="stepVal('form-slepM',1)"  class="sb sp1">+1</button>
+                            <input type="number" id="form-slepM" min="0" value="0" class="sn sna">
+                            <button type="button" onclick="stepVal('form-slepM',-1)"  class="sb sm1">−1</button>
+                            <button type="button" onclick="stepVal('form-slepM',-10)" class="sb sm10">−10</button>
                         </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-500">Zelená Malá</label>
-                                <input type="number" id="form-sold_zelM" min="0" value="0" class="w-full border rounded-lg p-2 font-bold text-center">
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-500">Zelená Velká</label>
-                                <input type="number" id="form-sold_zelV" min="0" value="0" class="w-full border rounded-lg p-2 font-bold text-center">
-                            </div>
+                        <!-- Slepičí V -->
+                        <div class="flex flex-col items-center gap-1.5">
+                            <span class="text-[11px] font-extrabold text-amber-800 uppercase tracking-wide text-center leading-tight">Slepičí<br>Velká</span>
+                            <button type="button" onclick="stepVal('form-slepV',10)" class="sb sp10">+10</button>
+                            <button type="button" onclick="stepVal('form-slepV',1)"  class="sb sp1">+1</button>
+                            <input type="number" id="form-slepV" min="0" value="0" class="sn sna">
+                            <button type="button" onclick="stepVal('form-slepV',-1)"  class="sb sm1">−1</button>
+                            <button type="button" onclick="stepVal('form-slepV',-10)" class="sb sm10">−10</button>
                         </div>
-                        <div>
-                            <label class="text-[10px] font-bold text-slate-500 block mb-0.5">Křepelčí</label>
-                            <input type="number" id="form-sold_krep" min="0" value="0" class="w-full border rounded-lg p-2 font-bold text-center">
+                        <!-- Zelená M -->
+                        <div class="flex flex-col items-center gap-1.5">
+                            <span class="text-[11px] font-extrabold text-emerald-800 uppercase tracking-wide text-center leading-tight">Zelená<br>Malá</span>
+                            <button type="button" onclick="stepVal('form-zelM',10)" class="sb sp10">+10</button>
+                            <button type="button" onclick="stepVal('form-zelM',1)"  class="sb sp1">+1</button>
+                            <input type="number" id="form-zelM" min="0" value="0" class="sn sne">
+                            <button type="button" onclick="stepVal('form-zelM',-1)"  class="sb sm1">−1</button>
+                            <button type="button" onclick="stepVal('form-zelM',-10)" class="sb sm10">−10</button>
+                        </div>
+                        <!-- Zelená V -->
+                        <div class="flex flex-col items-center gap-1.5">
+                            <span class="text-[11px] font-extrabold text-emerald-800 uppercase tracking-wide text-center leading-tight">Zelená<br>Velká</span>
+                            <button type="button" onclick="stepVal('form-zelV',10)" class="sb sp10">+10</button>
+                            <button type="button" onclick="stepVal('form-zelV',1)"  class="sb sp1">+1</button>
+                            <input type="number" id="form-zelV" min="0" value="0" class="sn sne">
+                            <button type="button" onclick="stepVal('form-zelV',-1)"  class="sb sm1">−1</button>
+                            <button type="button" onclick="stepVal('form-zelV',-10)" class="sb sm10">−10</button>
+                        </div>
+                        <!-- Křepelčí -->
+                        <div class="flex flex-col items-center gap-1.5">
+                            <span class="text-[11px] font-extrabold text-indigo-800 uppercase tracking-wide text-center leading-tight">Křepelčí</span>
+                            <button type="button" onclick="stepVal('form-krep',10)" class="sb sp10">+10</button>
+                            <button type="button" onclick="stepVal('form-krep',1)"  class="sb sp1">+1</button>
+                            <input type="number" id="form-krep" min="0" value="0" class="sn sni">
+                            <button type="button" onclick="stepVal('form-krep',-1)"  class="sb sm1">−1</button>
+                            <button type="button" onclick="stepVal('form-krep',-10)" class="sb sm10">−10</button>
                         </div>
                     </div>
                 </div>
+
+                <!-- PRODÁNO -->
+                <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="text-xl">🛒</span>
+                        <h4 class="font-extrabold text-sm text-blue-900 uppercase tracking-wider">Prodáno dnes</h4>
+                    </div>
+                    <div class="grid grid-cols-5 gap-3">
+                        <!-- Slepičí M -->
+                        <div class="flex flex-col items-center gap-1.5">
+                            <span class="text-[11px] font-extrabold text-amber-800 uppercase tracking-wide text-center leading-tight">Slepičí<br>Malá</span>
+                            <button type="button" onclick="stepVal('form-sold_slepM',10)" class="sb sp10">+10</button>
+                            <button type="button" onclick="stepVal('form-sold_slepM',1)"  class="sb sp1">+1</button>
+                            <input type="number" id="form-sold_slepM" min="0" value="0" class="sn sna">
+                            <button type="button" onclick="stepVal('form-sold_slepM',-1)"  class="sb sm1">−1</button>
+                            <button type="button" onclick="stepVal('form-sold_slepM',-10)" class="sb sm10">−10</button>
+                        </div>
+                        <!-- Slepičí V -->
+                        <div class="flex flex-col items-center gap-1.5">
+                            <span class="text-[11px] font-extrabold text-amber-800 uppercase tracking-wide text-center leading-tight">Slepičí<br>Velká</span>
+                            <button type="button" onclick="stepVal('form-sold_slepV',10)" class="sb sp10">+10</button>
+                            <button type="button" onclick="stepVal('form-sold_slepV',1)"  class="sb sp1">+1</button>
+                            <input type="number" id="form-sold_slepV" min="0" value="0" class="sn sna">
+                            <button type="button" onclick="stepVal('form-sold_slepV',-1)"  class="sb sm1">−1</button>
+                            <button type="button" onclick="stepVal('form-sold_slepV',-10)" class="sb sm10">−10</button>
+                        </div>
+                        <!-- Zelená M -->
+                        <div class="flex flex-col items-center gap-1.5">
+                            <span class="text-[11px] font-extrabold text-emerald-800 uppercase tracking-wide text-center leading-tight">Zelená<br>Malá</span>
+                            <button type="button" onclick="stepVal('form-sold_zelM',10)" class="sb sp10">+10</button>
+                            <button type="button" onclick="stepVal('form-sold_zelM',1)"  class="sb sp1">+1</button>
+                            <input type="number" id="form-sold_zelM" min="0" value="0" class="sn sne">
+                            <button type="button" onclick="stepVal('form-sold_zelM',-1)"  class="sb sm1">−1</button>
+                            <button type="button" onclick="stepVal('form-sold_zelM',-10)" class="sb sm10">−10</button>
+                        </div>
+                        <!-- Zelená V -->
+                        <div class="flex flex-col items-center gap-1.5">
+                            <span class="text-[11px] font-extrabold text-emerald-800 uppercase tracking-wide text-center leading-tight">Zelená<br>Velká</span>
+                            <button type="button" onclick="stepVal('form-sold_zelV',10)" class="sb sp10">+10</button>
+                            <button type="button" onclick="stepVal('form-sold_zelV',1)"  class="sb sp1">+1</button>
+                            <input type="number" id="form-sold_zelV" min="0" value="0" class="sn sne">
+                            <button type="button" onclick="stepVal('form-sold_zelV',-1)"  class="sb sm1">−1</button>
+                            <button type="button" onclick="stepVal('form-sold_zelV',-10)" class="sb sm10">−10</button>
+                        </div>
+                        <!-- Křepelčí -->
+                        <div class="flex flex-col items-center gap-1.5">
+                            <span class="text-[11px] font-extrabold text-indigo-800 uppercase tracking-wide text-center leading-tight">Křepelčí</span>
+                            <button type="button" onclick="stepVal('form-sold_krep',10)" class="sb sp10">+10</button>
+                            <button type="button" onclick="stepVal('form-sold_krep',1)"  class="sb sp1">+1</button>
+                            <input type="number" id="form-sold_krep" min="0" value="0" class="sn sni">
+                            <button type="button" onclick="stepVal('form-sold_krep',-1)"  class="sb sm1">−1</button>
+                            <button type="button" onclick="stepVal('form-sold_krep',-10)" class="sb sm10">−10</button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="flex justify-end gap-3 pt-4 border-t">
-                    <button type="button" onclick="closeAddModal()" class="px-4 py-2 border rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-50">Zrušit</button>
-                    <button type="submit" class="px-5 py-2 bg-amber-800 hover:bg-amber-950 text-white font-bold rounded-xl text-xs">Uložit</button>
+                    <button type="button" onclick="closeAddModal()" class="px-5 py-2.5 border rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-50">Zrušit</button>
+                    <button type="submit" class="px-6 py-2.5 bg-amber-800 hover:bg-amber-950 text-white font-bold rounded-xl text-sm">Uložit</button>
                 </div>
             </form>
         </div>
@@ -1177,6 +1244,11 @@ function updateUI() {
 // MODAL: ZÁZNAM
 // ============================================================
 
+function stepVal(id, delta) {
+    const el = document.getElementById(id);
+    el.value = Math.max(0, (parseInt(el.value) || 0) + delta);
+}
+
 function openAddModal() {
     document.getElementById('modal-title').textContent = 'Zapsat nový den';
     document.getElementById('edit-original-date').value = '';
@@ -1759,6 +1831,7 @@ window.updateUI = updateUI;
 window.recalcCutoffStock = recalcCutoffStock;
 window.toggleStats = toggleStats;
 window.dismissSetupBanner = dismissSetupBanner;
+window.stepVal = stepVal;
 
 </script>
 </body>
