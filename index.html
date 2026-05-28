@@ -1711,68 +1711,128 @@ function updateCharts() {
 // ZVÍŘÁTKA 🐔🐓🥚  — requestAnimationFrame animace
 // ============================================================
 
+function _splatEgg(cx, cy) {
+    const s = document.createElement('div');
+    s.style.cssText = `position:fixed;left:${cx-55}px;top:${cy-34}px;width:110px;height:76px;z-index:9999;pointer-events:none;transform-origin:50% 60%;will-change:transform,opacity;`;
+    s.innerHTML = `<svg width="110" height="76" viewBox="0 0 110 76" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="55" cy="54" rx="50" ry="20" fill="white" opacity="0.97"/>
+        <ellipse cx="26" cy="60" rx="18" ry="10" fill="white" opacity="0.91"/>
+        <ellipse cx="82" cy="58" rx="16" ry="9" fill="white" opacity="0.89"/>
+        <ellipse cx="11" cy="64" rx="9" ry="5.5" fill="white" opacity="0.78"/>
+        <ellipse cx="96" cy="62" rx="8" ry="5" fill="white" opacity="0.74"/>
+        <ellipse cx="42" cy="66" rx="7" ry="4" fill="white" opacity="0.68"/>
+        <circle cx="55" cy="47" r="20" fill="#fbbf24"/>
+        <circle cx="46" cy="39" r="7" fill="#fde68a" opacity="0.62"/>
+    </svg>`;
+    document.body.appendChild(s);
+
+    let t = 0, last = null;
+    const tick = ts => {
+        if (!last) last = ts;
+        t += Math.min((ts - last) / 1000, 0.08);
+        last = ts;
+        let sc = 1, dy = 0, op = 1;
+        if (t < 0.18) {
+            const p = t / 0.18;
+            sc = p < 0.7 ? (p / 0.7) * 1.28 : 1.28 - ((p - 0.7) / 0.3) * 0.28;
+        } else if (t < 0.58) {
+            dy = (t - 0.18) * 16;
+        } else if (t < 1.15) {
+            dy = 0.4 * 16 + (t - 0.58) * 7;
+            op = Math.max(0, 1 - (t - 0.58) / 0.57);
+        } else {
+            s.remove(); return;
+        }
+        s.style.transform = `scale(${sc}) translateY(${dy}px)`;
+        s.style.opacity = op;
+        requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+}
+
 function _spawnCritter() {
-    const options = [
-        { e: '🐔', label: 'slepice' },
-        { e: '🐓', label: 'kohout'  },
-        { e: '🐣', label: 'kuřátko' }
-    ];
-    const { e } = options[Math.floor(Math.random() * options.length)];
-    const goRight = Math.random() > 0.4;
-    const size    = 2.2 + Math.random() * 0.7;
-    const speed   = 180 + Math.random() * 160;
+    const options = ['🐔', '🐓', '🐣'];
+    const e = options[Math.floor(Math.random() * options.length)];
+    const size       = 2.2 + Math.random() * 0.7;
+    const spd        = 180 + Math.random() * 160;
     const bottomBase = 6 + Math.floor(Math.random() * 16);
+    const vw         = window.innerWidth;
+
+    let vel = spd * (Math.random() > 0.4 ? 1 : -1);
+    let pos = vel > 0 ? -90 : vw + 90;
+    let hasTurned = false;
 
     const el = document.createElement('div');
     el.textContent = e;
-    el.style.cssText = `position:fixed;bottom:${bottomBase}px;font-size:${size}rem;z-index:9999;pointer-events:none;user-select:none;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.18));will-change:transform,left,right,bottom;`;
-    if (goRight) { el.style.left = '-90px'; }
-    else         { el.style.right = '-90px'; el.style.transform = 'scaleX(-1)'; }
+    el.style.cssText = `position:fixed;bottom:${bottomBase}px;left:${pos}px;font-size:${size}rem;z-index:9999;pointer-events:auto;cursor:pointer;user-select:none;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.18));will-change:transform,left,bottom;`;
     document.body.appendChild(el);
 
-    const vw = window.innerWidth + 180;
-    let pos = 0, last = null;
+    el.addEventListener('click', () => { vel = -vel; });
 
+    let last = null;
     const tick = ts => {
         if (!last) last = ts;
         const dt = Math.min((ts - last) / 1000, 0.1);
         last = ts;
-        pos += speed * dt;
-        const bounce = Math.abs(Math.sin(pos / 28)) * 9;
-        const sq = 1 + Math.abs(Math.sin(pos / 14)) * 0.12;
-        if (goRight) { el.style.left = `${pos - 90}px`; el.style.transform = `scaleX(${sq}) scaleY(${1/sq})`; }
-        else         { el.style.right = `${pos - 90}px`; el.style.transform = `scaleX(${-sq}) scaleY(${1/sq})`; }
-        el.style.bottom = `${bottomBase + bounce}px`;
-        if (pos < vw) requestAnimationFrame(tick);
-        else el.remove();
+        pos += vel * dt;
+
+        if (!hasTurned) {
+            const frac = pos / vw;
+            if (frac > 0.25 && frac < 0.75 && Math.random() < 0.004) {
+                hasTurned = true;
+                vel = -vel;
+            }
+        }
+
+        const facing  = vel > 0;
+        const absDist = Math.abs(pos);
+        const bounce  = Math.abs(Math.sin(absDist / 28)) * 9;
+        const sq      = 1 + Math.abs(Math.sin(absDist / 14)) * 0.12;
+        el.style.left      = `${pos}px`;
+        el.style.transform = `scaleX(${facing ? sq : -sq}) scaleY(${1 / sq})`;
+        el.style.bottom    = `${bottomBase + bounce}px`;
+
+        const gone = facing ? pos > vw + 90 : pos < -90;
+        if (gone) { el.remove(); return; }
+        requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
 }
 
 function _spawnEgg() {
-    const el = document.createElement('div');
-    el.textContent = '🥚';
     const startX = 40 + Math.random() * (window.innerWidth - 80);
     const size   = 1.6 + Math.random() * 0.8;
     const speed  = 260 + Math.random() * 180;
-    el.style.cssText = `position:fixed;top:-60px;left:${startX}px;font-size:${size}rem;z-index:9999;pointer-events:none;user-select:none;will-change:transform,top;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.15));`;
+
+    const el = document.createElement('div');
+    el.textContent = '🥚';
+    el.style.cssText = `position:fixed;top:-60px;left:${startX}px;font-size:${size}rem;z-index:9999;pointer-events:auto;cursor:pointer;user-select:none;will-change:transform,top;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.15));`;
     document.body.appendChild(el);
 
-    let posY = -60, rotation = 0, wobbleX = startX, last = null;
+    let posY = -60, wobbleX = startX, rotation = 0, last = null, splatted = false;
     const maxY = window.innerHeight + 80;
 
+    el.addEventListener('click', () => {
+        if (splatted) return;
+        splatted = true;
+        const r = el.getBoundingClientRect();
+        el.remove();
+        _splatEgg(r.left + r.width / 2, r.top + r.height / 2);
+    });
+
     const tick = ts => {
+        if (splatted) return;
         if (!last) last = ts;
         const dt = Math.min((ts - last) / 1000, 0.1);
         last = ts;
-        posY  += speed * dt;
+        posY     += speed * dt;
         rotation += 200 * dt;
         wobbleX  += Math.sin(posY / 35) * 0.6;
         const fade = posY > maxY * 0.65 ? Math.max(0, 1 - (posY - maxY * 0.65) / (maxY * 0.35)) : 1;
-        el.style.top = `${posY}px`;
-        el.style.left = `${wobbleX}px`;
+        el.style.top       = `${posY}px`;
+        el.style.left      = `${wobbleX}px`;
         el.style.transform = `rotate(${rotation}deg)`;
-        el.style.opacity = fade;
+        el.style.opacity   = fade;
         if (posY < maxY && fade > 0) requestAnimationFrame(tick);
         else el.remove();
     };
