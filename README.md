@@ -121,3 +121,55 @@ Aplikace umí přečíst data z původní verze (`egg_tracker_v3_data` v localSt
 - Auto-pull z cloudu při startu, pokud je cloud verze novější než lokální
 - PWA + offline service worker (přidávat data v terénu bez signálu)
 - Build pipeline pro Tailwind (eliminuje warning z CDN v konzoli)
+
+## Veřejné API pro prodejní web
+
+Vedle privátního `/api/data` (owner sync) jsou tři veřejné endpointy pro prodejní web *Čerstvě sneseno*:
+
+### `GET /api/stock`
+
+Bez autorizace. Vrací aktuální dostupný sklad (fyzický stav minus aktivní rezervace).
+
+```bash
+curl https://vajecnydenik.vercel.app/api/stock
+```
+
+```json
+{
+  "available": { "slepM": 3, "slepV": 53, "zelM": 4, "zelV": 0, "krep": 81 },
+  "physical":  { "slepM": 3, "slepV": 53, "zelM": 4, "zelV": 0, "krep": 81 },
+  "reserved":  { "slepM": 0, "slepV": 0,  "zelM": 0, "zelV": 0, "krep": 0 },
+  "updatedAt": "2026-05-28T05:54:17.000Z",
+  "prices":    { "slepM": 5, "slepV": 6, "zelM": 7, "zelV": 7, "krep": 3 }
+}
+```
+
+Edge cache: 30 s + SWR 60 s.
+
+### `POST /api/reserve`
+
+Bez autorizace. Vytvoří rezervaci s TTL **4 hodiny**. Rate-limit 5 rezervací/IP/h.
+
+```bash
+curl -X POST https://vajecnydenik.vercel.app/api/reserve \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "items": { "slepV": 10, "krep": 6 },
+    "customer": { "name": "Jan Novák", "phone": "+420123456789" }
+  }'
+```
+
+Při nedostatku skladu → `409` se shrnutím nedostupných položek. Validace selže → `400`.
+
+### `GET /api/reservations/<id>`
+
+Bez autorizace. Vrací stav rezervace (pro status stránku zákazníka).
+
+### Owner endpoints (vyžadují `?key=<ACCESS_KEY>`)
+
+- `GET /api/reservations` — list všech aktivních rezervací (pro UI deníku).
+- `DELETE /api/reservations/<id>` — zrušit / potvrdit rezervaci.
+
+### CORS
+
+Stock je `*`. Reserve a reservations používají `WEB_ORIGIN` z env. Pro vývoj nastav `WEB_ORIGIN=http://localhost:3000`.
