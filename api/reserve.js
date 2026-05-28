@@ -7,6 +7,7 @@
 // Rate-limit: 5 rezervací / IP / hodina (KV counter).
 
 import { kv } from '@vercel/kv';
+import { waitUntil } from '@vercel/functions';
 import {
     STORE_KEY,
     RESERVATIONS_SET_KEY,
@@ -172,14 +173,17 @@ export default async function handler(req, res) {
         await kv.set(`reservation:${id}`, reservation, { ex: RESERVATION_TTL_SECONDS });
         await kv.sadd(RESERVATIONS_SET_KEY, id);
 
-        // Email notifikace (volitelné, jen pokud je RESEND_API_KEY).
+        // Notifikace běží po response (waitUntil drží funkci naživu, dokud nedoběhnou).
+        // Bez waitUntil Vercel funkci po res.json() zabije a fetch na CallMeBot často nedoběhne.
         if (process.env.RESEND_API_KEY) {
-            sendNotifications(reservation).catch(e => console.warn('email send failed:', e.message));
+            waitUntil(
+                sendNotifications(reservation).catch(e => console.warn('email send failed:', e.message))
+            );
         }
-
-        // WhatsApp notifikace chovateli přes CallMeBot (volitelné).
         if (process.env.CALLMEBOT_APIKEY && process.env.OWNER_WHATSAPP_PHONE) {
-            sendWhatsAppNotification(reservation).catch(e => console.warn('whatsapp send failed:', e.message));
+            waitUntil(
+                sendWhatsAppNotification(reservation).catch(e => console.warn('whatsapp send failed:', e.message))
+            );
         }
 
         return res.status(201).json({
@@ -277,5 +281,8 @@ async function sendWhatsAppNotification(reservation) {
 
     const url = `https://api.callmebot.com/whatsapp.php?phone=${encodeURIComponent(phone)}&text=${encodeURIComponent(text)}&apikey=${encodeURIComponent(apikey)}`;
     const res = await fetch(url, { method: 'GET' });
-    if (!res.ok) throw new Error(`CallMeBot ${res.status}`);
+    if (!res.ok) {
+        const body = await res.text().catch(() => '');
+        throw new Error(`CallMeBot ${res.status}: ${body.slice(0, 200)}`);
+    }
 }
