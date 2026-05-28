@@ -62,10 +62,13 @@ export default async function handler(req, res) {
     }
 
     // --- Validace položek ---
+    // Klíče jsou volitelné (viz hlavička souboru) — chybějící hodnotu bereme jako 0.
     const requestedItems = {};
     let totalQty = 0;
     for (const k of CATEGORY_KEYS) {
-        const n = Number(body.items?.[k]);
+        const raw = body.items?.[k];
+        if (raw === undefined || raw === null || raw === '') continue;
+        const n = Number(raw);
         if (!Number.isFinite(n) || n < 0) {
             return jsonError(res, 400, `Neplatné množství pro ${k}`);
         }
