@@ -1,6 +1,6 @@
 # Vaječný Deník
 
-Evidence snášky a prodeje vajec pro azyl **Nech mě růst**. Single-page aplikace, frontend čistě v HTML/JS s Tailwind CSS přes CDN, perzistence v `localStorage`, volitelná cloud záloha přes Vercel KV (Upstash Redis).
+Evidence snášky a prodeje vajec. Single-page aplikace, frontend čistě v HTML/JS s Tailwind CSS přes CDN, perzistence v `localStorage`, volitelná cloud záloha přes Vercel KV (Upstash Redis).
 
 ## Funkce
 
