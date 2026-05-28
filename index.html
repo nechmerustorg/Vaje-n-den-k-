@@ -1557,6 +1557,28 @@ function updateUI() {
     const activeRecords = cutoff ? records.filter(r => r.date > cutoff) : records;
     const activeCalculated = calculateBalances(activeRecords, cutoffStock);
 
+    // Override balance pro řádek s cutoff datem: tam jsou „papírová" historická
+    // data sloppy a balance vypočtený od initialStock+history často dává nesmysly
+    // (záporné hodnoty). Chovatel ručně zadal cutoffStock = stav skladu k ránu
+    // prvního ostrého dne (= k ránu 27.5. = k večeru 26.5. po normální evidenci),
+    // tak ten zobrazujeme jako balance na cutoff řádku. Od dalšího dne se balance
+    // počítá poctivě z activeCalculated (start = cutoffStock + ostré záznamy).
+    const balanceOverrides = new Map();
+    if (cutoff) {
+        balanceOverrides.set(cutoff, {
+            bal_slepM: cutoffStock.slepM, bal_slepV: cutoffStock.slepV,
+            bal_zelM:  cutoffStock.zelM,  bal_zelV:  cutoffStock.zelV,
+            bal_krep:  cutoffStock.krep,
+        });
+        for (const r of activeCalculated) {
+            balanceOverrides.set(r.date, {
+                bal_slepM: r.bal_slepM, bal_slepV: r.bal_slepV,
+                bal_zelM:  r.bal_zelM,  bal_zelV:  r.bal_zelV,
+                bal_krep:  r.bal_krep,
+            });
+        }
+    }
+
     // Banner aktualizace
     if (cutoff) {
         const d = new Date(cutoff + 'T12:00:00');
@@ -1630,9 +1652,12 @@ function updateUI() {
     document.getElementById('card-kasa-detail').textContent =
         `Tržba: ${formatKc(totalRevenue)} | Sklad: ${formatKc(lastStockValue)}`;
 
-    // Filtrování pro tabulku
+    // Filtrování pro tabulku — aplikuj balance overrides na cutoff a ostré řádky.
     const searchQuery = document.getElementById('search-input').value.toLowerCase();
-    let display = [...calculated];
+    let display = calculated.map(row => {
+        const ov = balanceOverrides.get(row.date);
+        return ov ? { ...row, ...ov } : row;
+    });
     if (activeMonthFilter !== 'all') {
         display = display.filter(r => r.date.startsWith(activeMonthFilter));
     }
