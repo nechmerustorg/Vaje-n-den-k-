@@ -1439,31 +1439,50 @@ async function autoSyncOnStartup() {
         const localSettingsTs = safeGet(SETTINGS_TS_KEY);
         const shouldPullSettings = isFresh || !localSettingsTs || cloudSettingsTs > localSettingsTs;
 
-        if (isFresh || (cloudTs && (!localTs || cloudTs > localTs))) {
-            // Records: cloud je novější → stáhnout
+        // Rozhodnutí pull vs push se dělá ZVLÁŠŤ pro records a pro settings —
+        // nastavení (zvlášť ceny) mají vlastní timestamp a mohou se měnit
+        // nezávisle na záznamech (chovatel upraví ceny na zařízení A, ale ten den
+        // nezapíše žádný záznam → cloudTs records není novější než lokální B,
+        // ale cloudSettingsTs ano → ceny se musí stejně natáhnout).
+        const shouldPullRecords = isFresh || (cloudTs && (!localTs || cloudTs > localTs));
+        const cloudHasSettings = !!json.data.settings;
+        const settingsPulled = shouldPullSettings && cloudHasSettings;
+
+        if (shouldPullRecords) {
             records = (json.data.records || []).map(migrateRecord);
-
-            // Settings: stáhnout jen pokud jsou cloud nastavení novější než lokální
-            if (shouldPullSettings && json.data.settings) {
-                settings = {
-                    prices:        { ...DEFAULT_SETTINGS.prices,       ...(json.data.settings.prices       || {}) },
-                    initialStock:  { ...DEFAULT_SETTINGS.initialStock, ...(json.data.settings.initialStock  || {}) },
-                    historyCutoff: json.data.settings.historyCutoff ?? DEFAULT_SETTINGS.historyCutoff,
-                    cutoffStock:   json.data.settings.cutoffStock   ?? null
-                };
-                _migrateSettings(settings);
-                safeSet(SETTINGS_TS_KEY, cloudSettingsTs);
-            }
-
             safeSet(STORAGE_KEY,        JSON.stringify(records));
-            safeSet(SETTINGS_KEY,       JSON.stringify(settings));
             safeSet(SYNC_TIMESTAMP_KEY, cloudTs || new Date().toISOString());
+        }
+
+        if (settingsPulled) {
+            settings = {
+                prices:        { ...DEFAULT_SETTINGS.prices,       ...(json.data.settings.prices       || {}) },
+                initialStock:  { ...DEFAULT_SETTINGS.initialStock, ...(json.data.settings.initialStock  || {}) },
+                historyCutoff: json.data.settings.historyCutoff ?? DEFAULT_SETTINGS.historyCutoff,
+                cutoffStock:   json.data.settings.cutoffStock   ?? null
+            };
+            _migrateSettings(settings);
+            safeSet(SETTINGS_KEY,  JSON.stringify(settings));
+            safeSet(SETTINGS_TS_KEY, cloudSettingsTs);
+        }
+
+        if (shouldPullRecords || settingsPulled) {
             updateUI();
             renderMonthFilters();
             updateSyncIndicator('synced');
-            if (!isFresh) showToast('☁️ Načtena novější data z cloudu', 'info');
-        } else {
-            // Lokální data jsou aktuální nebo novější → push do cloudu (fire-and-forget)
+            if (!isFresh) {
+                const what = shouldPullRecords && settingsPulled ? 'data + nastavení'
+                    : shouldPullRecords ? 'záznamy'
+                    : 'nastavení (ceny)';
+                showToast(`☁️ Načteno novější ${what} z cloudu`, 'info');
+            }
+        }
+
+        // Pokud cokoliv lokálního zůstává novější (records NEBO settings), pushneme
+        // celý balík do cloudu. cloudSync pošle (records, settings, savedAt,
+        // settingsSavedAt) — settingsSavedAt = SETTINGS_TS_KEY, kterou jsme buď
+        // ponechali (lokál novější) nebo přepsali cloudovou hodnotou (lokál staršÍ).
+        if (!shouldPullRecords || !settingsPulled) {
             updateSyncIndicator('synced');
             cloudSync();
         }
