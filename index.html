@@ -484,6 +484,31 @@
             </div>
         </section>
 
+        <!-- REZERVACE — sekce pro správu aktivních rezervací (pod stavem skladu) -->
+        <section id="reservations-section" class="res-section" hidden>
+            <div class="res-section-header" onclick="toggleReservationsSection()">
+                <span style="font-size:1.25rem;">🧺</span>
+                <h2>Rezervace</h2>
+                <span id="res-section-summary" class="text-xs font-bold opacity-90"></span>
+                <span class="ml-auto flex items-center gap-2">
+                    <button type="button" onclick="event.stopPropagation(); refreshReservations();" class="text-white/85 hover:text-white text-xs font-bold px-2 py-1 rounded-md bg-white/15 hover:bg-white/25 transition">Obnovit</button>
+                    <svg id="res-section-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 transition-transform"><path d="M6 9l6 6 6-6"/></svg>
+                </span>
+            </div>
+            <div id="res-section-content" class="res-section-content">
+                <div class="px-5 pt-4 pb-2 flex flex-wrap items-center gap-2 border-b border-slate-100" id="res-filter-bar">
+                    <button type="button" class="res-filter active" data-filter="all">Vše <span class="filter-count" data-count="all">0</span></button>
+                    <button type="button" class="res-filter" data-filter="new">🔔 Nové <span class="filter-count" data-count="new">0</span></button>
+                    <button type="button" class="res-filter" data-filter="ready">✓ Připravené <span class="filter-count" data-count="ready">0</span></button>
+                    <button type="button" class="res-filter" data-filter="expiring">⏱ Brzy vyprší <span class="filter-count" data-count="expiring">0</span></button>
+                    <span id="res-last-checked" class="ml-auto text-[10px] text-slate-400 font-semibold"></span>
+                </div>
+                <div id="res-section-list" class="px-5 py-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <p class="res-empty col-span-full"><span class="emoji">🥚</span>Žádné aktivní rezervace.</p>
+                </div>
+            </div>
+        </section>
+
         <!-- GRAFY A STATISTIKY -->
         <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
             <div class="flex items-center justify-between mb-1 cursor-pointer select-none" onclick="toggleStats()">
@@ -577,31 +602,6 @@
                     </svg>
                     <span id="today-btn-sale-label">Přidat prodej</span>
                 </button>
-            </div>
-        </section>
-
-        <!-- REZERVACE — sekce pro správu aktivních rezervací -->
-        <section id="reservations-section" class="res-section" hidden>
-            <div class="res-section-header" onclick="toggleReservationsSection()">
-                <span style="font-size:1.25rem;">🧺</span>
-                <h2>Rezervace</h2>
-                <span id="res-section-summary" class="text-xs font-bold opacity-90"></span>
-                <span class="ml-auto flex items-center gap-2">
-                    <button type="button" onclick="event.stopPropagation(); refreshReservations();" class="text-white/85 hover:text-white text-xs font-bold px-2 py-1 rounded-md bg-white/15 hover:bg-white/25 transition">Obnovit</button>
-                    <svg id="res-section-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 transition-transform"><path d="M6 9l6 6 6-6"/></svg>
-                </span>
-            </div>
-            <div id="res-section-content" class="res-section-content">
-                <div class="px-5 pt-4 pb-2 flex flex-wrap items-center gap-2 border-b border-slate-100" id="res-filter-bar">
-                    <button type="button" class="res-filter active" data-filter="all">Vše <span class="filter-count" data-count="all">0</span></button>
-                    <button type="button" class="res-filter" data-filter="new">🔔 Nové <span class="filter-count" data-count="new">0</span></button>
-                    <button type="button" class="res-filter" data-filter="ready">✓ Připravené <span class="filter-count" data-count="ready">0</span></button>
-                    <button type="button" class="res-filter" data-filter="expiring">⏱ Brzy vyprší <span class="filter-count" data-count="expiring">0</span></button>
-                    <span id="res-last-checked" class="ml-auto text-[10px] text-slate-400 font-semibold"></span>
-                </div>
-                <div id="res-section-list" class="px-5 py-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                    <p class="res-empty col-span-full"><span class="emoji">🥚</span>Žádné aktivní rezervace.</p>
-                </div>
             </div>
         </section>
 
@@ -845,17 +845,19 @@
 
                 <!-- UZÁVĚRKA HISTORIE -->
                 <div>
-                    <h4 class="font-extrabold text-sm text-slate-800 uppercase tracking-wider mb-3 border-b pb-1.5">Uzávěrka historie</h4>
-                    <p class="text-xs text-slate-500 mb-3">
-                        Záznamy do tohoto data jsou orientační (přepsány z papíru) a nevstupují do statistik ani do validace záporných zůstatků.
-                    </p>
+                    <h4 class="font-extrabold text-sm text-slate-800 uppercase tracking-wider mb-3 border-b pb-1.5">Uzávěrka historie — od kdy se počítá ostře</h4>
+                    <div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 mb-3 text-xs text-amber-900 leading-snug">
+                        <strong>Jak to funguje:</strong> všechny záznamy <strong>do data uzávěrky včetně</strong> jsou jen informativní (přepsané z papíru) — nepočítají se do statistik ani do skladových zásob. <strong>První „ostrý" den</strong>, který do skladu vstupuje, je den hned po uzávěrce.
+                        <span class="block mt-1 text-amber-700">Příklad: uzávěrka 26.5. → první ostrý den 27.5.</span>
+                    </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
                         <div>
                             <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Datum uzávěrky (včetně)</label>
                             <input type="date" id="set-cutoff-date" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
+                            <p class="text-[10px] text-slate-400 mt-1" id="set-cutoff-hint"></p>
                         </div>
                     </div>
-                    <p class="text-[10px] uppercase font-bold text-slate-400 mb-2">Stav skladu k ránu prvního ostrého dne</p>
+                    <p class="text-[10px] uppercase font-bold text-slate-400 mb-2">Stav skladu k ránu prvního ostrého dne (=základ pro výpočet)</p>
                     <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-3">
                         <div>
                             <label class="block text-[10px] uppercase font-bold text-slate-400">Slep M</label>
@@ -969,8 +971,13 @@ const SETTINGS_TS_KEY    = 'egg_tracker_v4_settings_ts';   // timestamp posledn�
 const DEFAULT_SETTINGS = {
     prices: { slepM: 4.5, slepV: 5.5, zelM: 6.0, zelV: 6.5, krep: 3.0 },
     initialStock: { slepM: 3, slepV: 53, zelM: 0, zelV: 0, krep: 81 },
-    historyCutoff: '2026-05-22',  // záznamy ≤ tohoto data jsou orientační a jdou mimo validaci/statistiky
-    cutoffStock: { slepM: 3, slepV: 0, zelM: 1, zelV: 1, krep: 7 }  // stav skladu ráno 23.5.2026
+    // Záznamy ≤ tohoto data jsou jen orientační (přepsané z papíru) a nevstupují
+    // do statistik ani do výpočtu skladu. První „ostrý" den = den po cutoff.
+    // historyCutoff = 2026-05-26 → první ostrý den je 27.5.2026.
+    historyCutoff: '2026-05-26',
+    // Stav skladu ráno prvního ostrého dne (27.5.). Chovatel zadá manuálně
+    // v Nastavení nebo doplní tlačítkem „Přepočítat stav skladu z historie".
+    cutoffStock: { slepM: 0, slepV: 0, zelM: 0, zelV: 0, krep: 0 }
 };
 
 const CATEGORIES = [
@@ -1293,12 +1300,16 @@ function _migrateSettings(s) {
     // One-time migration: starý cutoff 2026-05-24 → 2026-05-22
     if (s.historyCutoff === '2026-05-24') {
         s.historyCutoff = '2026-05-22';
-        // cutoffStock resetovat jen pokud ještě není nastaven uživatelem
-        if (!s.cutoffStock) {
-            s.cutoffStock = { ...DEFAULT_SETTINGS.cutoffStock };
-        }
     }
-    // Fallback: pokud stále chybí cutoffStock, použij výchozí hodnoty (ne výpočet z chybné historie)
+    // 2026-05-28 migrace: cutoff posunout na 26.5. (první ostrý den = 27.5.).
+    // Reset cutoffStock — chovatel ho musí znova zadat / přepočítat z historie,
+    // protože stav skladu k ránu 27.5. se liší od stavu k ránu 23.5.
+    if (s.historyCutoff === '2026-05-22') {
+        s.historyCutoff = '2026-05-26';
+        s.cutoffStock = null;
+    }
+    // Fallback: pokud chybí cutoffStock, použij výchozí (nuly) — chovatel uvidí
+    // v Nastavení prázdná pole a doplní reálný stav.
     if (s.historyCutoff && !s.cutoffStock) {
         s.cutoffStock = { ...DEFAULT_SETTINGS.cutoffStock };
     }
@@ -1867,6 +1878,19 @@ function handleFormSubmit(event) {
 // MODAL: NASTAVENÍ
 // ============================================================
 
+function _updateCutoffHint() {
+    const input = document.getElementById('set-cutoff-date');
+    const hint = document.getElementById('set-cutoff-hint');
+    if (!input || !hint) return;
+    const v = input.value;
+    if (!v) { hint.textContent = ''; return; }
+    const d = new Date(v);
+    if (Number.isNaN(d.getTime())) { hint.textContent = ''; return; }
+    d.setDate(d.getDate() + 1);
+    const fmt = d.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long', year: 'numeric' });
+    hint.textContent = `→ první ostrý den, který vstupuje do skladu: ${fmt}`;
+}
+
 function openSettings() {
     ['slepM','slepV','zelM','zelV','krep'].forEach(k => {
         document.getElementById(`set-price-${k}`).value = settings.prices[k];
@@ -1875,7 +1899,10 @@ function openSettings() {
     const key = getCloudKey();
     if (key) document.getElementById('set-cloud-key').value = key;
     // Uzávěrka historie
-    document.getElementById('set-cutoff-date').value = settings.historyCutoff || '';
+    const cutoffInput = document.getElementById('set-cutoff-date');
+    cutoffInput.value = settings.historyCutoff || '';
+    _updateCutoffHint();
+    cutoffInput.oninput = _updateCutoffHint;
     const cs = settings.cutoffStock || {};
     ['slepM','slepV','zelM','zelV','krep'].forEach(k => {
         document.getElementById(`set-cutoff-${k}`).value = cs[k] ?? '';
@@ -2649,14 +2676,15 @@ function renderReservationsSection() {
     setCount('ready', readyCount);
     setCount('expiring', expiringCount);
 
-    // Hide whole section if no key set (nothing to manage).
+    // Hide whole section if no key set (polling neběží, nemáme co ukázat).
     const hasKey = !!getCloudKey();
     if (!hasKey) {
         section.hidden = true;
         return;
     }
-    // Skryj sekci úplně pokud není žádná rezervace.
-    section.hidden = total === 0;
+    // Sekce je vždy viditelná, když je nastavený klíč — i prázdný stav je užitečná
+    // informace ("zatím nikdo neobjednal").
+    section.hidden = false;
 
     if (summary) {
         const parts = [];
@@ -2668,7 +2696,10 @@ function renderReservationsSection() {
 
     const filtered = filterReservations(_reservationsFilter);
     if (filtered.length === 0) {
-        list.innerHTML = `<p class="res-empty col-span-full"><span class="emoji">🥚</span>V tomto filtru nic není.</p>`;
+        const emptyMsg = total === 0
+            ? '<span class="emoji">🥚</span>Zatím žádné rezervace. Sem se hned objeví, jakmile někdo objedná na webu.'
+            : '<span class="emoji">🥚</span>V tomto filtru nic není.';
+        list.innerHTML = `<p class="res-empty col-span-full">${emptyMsg}</p>`;
         return;
     }
 
