@@ -14,23 +14,31 @@ export function emptyStock() {
     return { ...DEFAULT_STOCK };
 }
 
-// Spočítá fyzický sklad z blob dat deníku.
-// Logika kopíruje calculateBalances() z index.html, ale jen pro poslední stav.
+// Musí dávat STEJNÉ číslo, jako se zobrazuje v deníku v kartě "Aktuální sklad"
+// (index.html updateUI(), používá activeCalculated). Logika:
+//   start  = settings.cutoffStock (fallback settings.initialStock)
+//   sumuj  = records s date > settings.historyCutoff (fallback: všechny)
+//   stav   = start + Σ(snáška) - Σ(prodej)
 export function computeStockFromBlob(blob) {
     if (!blob || typeof blob !== 'object') return emptyStock();
     const settings = blob.settings || {};
-    const initial = { ...DEFAULT_STOCK, ...(settings.initialStock || {}) };
-    const records = Array.isArray(blob.records) ? blob.records : [];
-    const balance = { ...initial };
+    const start = {
+        ...DEFAULT_STOCK,
+        ...(settings.cutoffStock || settings.initialStock || {}),
+    };
+    const cutoff = settings.historyCutoff || '';
+    const allRecords = Array.isArray(blob.records) ? blob.records : [];
+    const records = cutoff
+        ? allRecords.filter(r => r && typeof r.date === 'string' && r.date > cutoff)
+        : allRecords;
+
+    const balance = { ...start };
     for (const r of records) {
         for (const k of CATEGORY_KEYS) {
             balance[k] += (Number(r[k]) || 0) - (Number(r[`sold_${k}`]) || 0);
         }
     }
-    // Klamp na nezáporné — záporné stavy by web neměl ukazovat.
-    for (const k of CATEGORY_KEYS) {
-        if (balance[k] < 0) balance[k] = 0;
-    }
+    // Záporné stavy nechejme projít — `available` se klampuje až výš v stock.js.
     return balance;
 }
 
