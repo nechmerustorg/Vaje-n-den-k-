@@ -1108,7 +1108,7 @@ function _migrateSettings(s) {
 function saveToStorage() {
     safeSet(STORAGE_KEY, JSON.stringify(records));
     safeSet(SETTINGS_KEY, JSON.stringify(settings));
-    scheduleCloudSync();
+    cloudSync(); // okamžitý push — zásoby v KV musí být aktuální pro /api/reserve
 }
 
 function loadFromStorage() {
