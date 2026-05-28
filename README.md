@@ -173,3 +173,43 @@ Bez autorizace. Vrací stav rezervace (pro status stránku zákazníka).
 ### CORS
 
 Stock je `*`. Reserve a reservations používají `WEB_ORIGIN` z env. Pro vývoj nastav `WEB_ORIGIN=http://localhost:3000`.
+
+## Notifikace nových rezervací
+
+Chovatel se o nové rezervaci dozví dvěma cestami:
+
+1. **WhatsApp push** na mobil (i když má deník zavřený) — přes CallMeBot, zdarma.
+2. **Animovaný indikátor v hlavičce deníku** s počtem nepřečtených + zvuk + browser notification, když je deník otevřený.
+
+### WhatsApp push přes CallMeBot
+
+Jednorázový setup (z mobilu chovatele, ~5 minut):
+
+1. Uložit kontakt **+34 644 51 95 23** (číslo CallMeBota).
+2. Poslat mu z WhatsAppu zprávu přesně: `I allow callmebot to send me messages`
+3. Během několika minut přijde odpověď s **7-místným API klíčem**.
+4. V Vercel projektu **Project Settings → Environment Variables** přidat:
+
+   ```
+   CALLMEBOT_APIKEY      = <7-místný klíč z kroku 3>
+   OWNER_WHATSAPP_PHONE  = 420XXXXXXXXX     # mezinárodní formát BEZ +
+   ```
+
+5. Spustit **Redeploy**, aby se proměnné propsaly.
+
+Při každé nové rezervaci pak na WhatsApp dorazí zpráva ve tvaru:
+
+```
+🥚 Nová rezervace
+Jan Novák
+10 ks Slepičí vejce — velké, 6 ks Křepelčí vejce
+Kód: AB12
+Kontakt: +420 123 456 789
+Cena: 78 Kč
+```
+
+Volání je **fire-and-forget**: pokud CallMeBot selže, rezervace stejně projde, v logu se objeví jen warning. Pokud env proměnné chybí, WhatsApp se prostě neposílá.
+
+### In-app indikátor
+
+V hlavičce deníku se po každé nové rezervaci objeví **pulsující zvonek** s číselným badgem. Klikem se otevře panel s detailem rezervací (jméno, položky, pickup kód, telefon, čas) a tlačítkem „Označit vše za viděné". Funguje na základě polling `GET /api/reservations?key=...` každých 30 s. Vyžaduje vyplněný **ACCESS_KEY** v Nastavení (stejný jako pro cloud sync). Volitelně přidá zvuk a browser notifikace (povolit lze v Nastavení).

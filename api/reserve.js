@@ -174,6 +174,11 @@ export default async function handler(req, res) {
             sendNotifications(reservation).catch(e => console.warn('email send failed:', e.message));
         }
 
+        // WhatsApp notifikace chovateli přes CallMeBot (volitelné).
+        if (process.env.CALLMEBOT_APIKEY && process.env.OWNER_WHATSAPP_PHONE) {
+            sendWhatsAppNotification(reservation).catch(e => console.warn('whatsapp send failed:', e.message));
+        }
+
         return res.status(201).json({
             id,
             pickupCode,
@@ -247,4 +252,27 @@ function labelFor(k) {
         zelV: 'Slepičí zelené vejce — velké',
         krep: 'Křepelčí vejce',
     }[k] || k;
+}
+
+async function sendWhatsAppNotification(reservation) {
+    const phone = String(process.env.OWNER_WHATSAPP_PHONE || '').replace(/\D/g, '');
+    const apikey = process.env.CALLMEBOT_APIKEY;
+    if (!phone || !apikey) return;
+
+    const items = Object.entries(reservation.items)
+        .map(([k, q]) => `${q} ks ${labelFor(k)}`)
+        .join(', ');
+    const contact = reservation.customer.phone || reservation.customer.email || '—';
+    const text = [
+        '🥚 Nová rezervace',
+        reservation.customer.name,
+        items,
+        `Kód: ${reservation.pickupCode}`,
+        `Kontakt: ${contact}`,
+        reservation.totalKc ? `Cena: ${reservation.totalKc} Kč` : null,
+    ].filter(Boolean).join('\n');
+
+    const url = `https://api.callmebot.com/whatsapp.php?phone=${encodeURIComponent(phone)}&text=${encodeURIComponent(text)}&apikey=${encodeURIComponent(apikey)}`;
+    const res = await fetch(url, { method: 'GET' });
+    if (!res.ok) throw new Error(`CallMeBot ${res.status}`);
 }
