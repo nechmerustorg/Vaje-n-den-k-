@@ -21,8 +21,6 @@
         .toast-success { background: #10b981; color: white; }
         .toast-error { background: #dc2626; color: white; }
         .toast-info { background: #0f172a; color: white; }
-        .history-row { background-color: #f8fafc !important; }
-        .history-row td { opacity: 0.55; }
 
         /* Stats section collapse */
         #stats-content {
@@ -608,10 +606,10 @@
         <!-- HLAVNÍ TABULKA -->
         <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
             <h2 class="text-base font-extrabold text-slate-800 mb-3 flex items-center gap-2">Evidenční sešit 2026</h2>
-            <div id="cutoff-banner" class="mb-3 px-4 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-500 flex flex-wrap items-center gap-x-3 gap-y-1">
-                <span>📜 <strong class="text-slate-600">Historie</strong> do <span id="banner-cutoff-date" class="font-semibold text-slate-600"></span> (orientační)</span>
+            <div id="cutoff-banner" class="hidden">
+                <span id="banner-cutoff-date"></span>
                 <span class="text-slate-300 hidden sm:inline">|</span>
-                <span>⚡ <strong class="text-slate-600">Ostrá evidence</strong> od <span id="banner-active-from" class="font-semibold text-slate-600"></span></span>
+                <span id="banner-active-from"></span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse min-w-[1100px]">
@@ -816,46 +814,32 @@
                     </div>
                 </div>
 
-                <!-- UZÁVĚRKA HISTORIE -->
+                <!-- POČÁTEČNÍ STAV SKLADU -->
                 <div>
-                    <h4 class="font-extrabold text-sm text-slate-800 uppercase tracking-wider mb-3 border-b pb-1.5">Uzávěrka historie — od kdy se počítá ostře</h4>
-                    <div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 mb-3 text-xs text-amber-900 leading-snug">
-                        <strong>Jak to funguje:</strong> všechny záznamy <strong>do data uzávěrky včetně</strong> jsou jen informativní (přepsané z papíru) — nepočítají se do statistik ani do skladových zásob. <strong>První „ostrý" den</strong>, který do skladu vstupuje, je den hned po uzávěrce.
-                        <span class="block mt-1 text-amber-700">Příklad: uzávěrka 26.5. → první ostrý den 27.5.</span>
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
-                        <div>
-                            <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Datum uzávěrky (včetně)</label>
-                            <input type="date" id="set-cutoff-date" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
-                            <p class="text-[10px] text-slate-400 mt-1" id="set-cutoff-hint"></p>
-                        </div>
-                    </div>
-                    <p class="text-[10px] uppercase font-bold text-slate-400 mb-2">Stav skladu k ránu prvního ostrého dne (=základ pro výpočet)</p>
-                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-3">
+                    <h4 class="font-extrabold text-sm text-slate-800 uppercase tracking-wider mb-3 border-b pb-1.5">Počáteční stav skladu</h4>
+                    <p class="text-xs text-slate-500 mb-3">Stav skladu k zahájení evidence. Stock = tento základ + součet všech zápisů.</p>
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
                         <div>
                             <label class="block text-[10px] uppercase font-bold text-slate-400">Slep M</label>
-                            <input type="number" id="set-cutoff-slepM" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
+                            <input type="number" id="set-init-slepM" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
                         </div>
                         <div>
                             <label class="block text-[10px] uppercase font-bold text-slate-400">Slep V</label>
-                            <input type="number" id="set-cutoff-slepV" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
+                            <input type="number" id="set-init-slepV" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
                         </div>
                         <div>
                             <label class="block text-[10px] uppercase font-bold text-slate-400">Zelená M</label>
-                            <input type="number" id="set-cutoff-zelM" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
+                            <input type="number" id="set-init-zelM" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
                         </div>
                         <div>
                             <label class="block text-[10px] uppercase font-bold text-slate-400">Zelená V</label>
-                            <input type="number" id="set-cutoff-zelV" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
+                            <input type="number" id="set-init-zelV" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
                         </div>
                         <div>
                             <label class="block text-[10px] uppercase font-bold text-slate-400">Křepelčí</label>
-                            <input type="number" id="set-cutoff-krep" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
+                            <input type="number" id="set-init-krep" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold">
                         </div>
                     </div>
-                    <button type="button" onclick="recalcCutoffStock()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-1.5 px-3 rounded-lg text-xs transition">
-                        Přepočítat stav skladu z historie
-                    </button>
                 </div>
 
                 <!-- CLOUD SYNC -->
@@ -943,14 +927,7 @@ const SETTINGS_TS_KEY    = 'egg_tracker_v4_settings_ts';   // timestamp posledn�
 
 const DEFAULT_SETTINGS = {
     prices: { slepM: 4.5, slepV: 5.5, zelM: 6.0, zelV: 6.5, krep: 3.0 },
-    initialStock: { slepM: 3, slepV: 53, zelM: 0, zelV: 0, krep: 81 },
-    // Záznamy ≤ tohoto data jsou jen orientační (přepsané z papíru) a nevstupují
-    // do statistik ani do výpočtu skladu. První „ostrý" den = den po cutoff.
-    // historyCutoff = 2026-05-26 → první ostrý den je 27.5.2026.
-    historyCutoff: '2026-05-26',
-    // Stav skladu ráno prvního ostrého dne (27.5.). Chovatel zadá manuálně
-    // v Nastavení nebo doplní tlačítkem „Přepočítat stav skladu z historie".
-    cutoffStock: { slepM: 0, slepV: 0, zelM: 0, zelV: 0, krep: 0 }
+    initialStock: { slepM: 0, slepV: 0, zelM: 0, zelV: 0, krep: 0 }
 };
 
 const CATEGORIES = [
@@ -1201,14 +1178,6 @@ function calculateBalances(recs, initStock) {
     });
 }
 
-function computeStockAtDate(recs, initStock, cutoffDate) {
-    const hist = recs.filter(r => r.date <= cutoffDate);
-    const calc = calculateBalances(hist, initStock);
-    if (!calc.length) return { ...initStock };
-    const last = calc[calc.length - 1];
-    return { slepM: last.bal_slepM, slepV: last.bal_slepV,
-             zelM: last.bal_zelM,   zelV: last.bal_zelV, krep: last.bal_krep };
-}
 
 function findNegativeBalances(calculated) {
     const issues = [];
@@ -1269,23 +1238,16 @@ function showToast(message, type = 'info') {
 // PERSISTENCE
 // ============================================================
 
-function _migrateSettings(s) {
-    // One-time migration: starý cutoff 2026-05-24 → 2026-05-22
-    if (s.historyCutoff === '2026-05-24') {
-        s.historyCutoff = '2026-05-22';
+function _migrateToSimpleModel() {
+    if (!settings.historyCutoff) return;
+    const cutoff = settings.historyCutoff;
+    if (settings.cutoffStock) {
+        settings.initialStock = { ...settings.cutoffStock };
     }
-    // 2026-05-28 migrace: cutoff posunout na 26.5. (první ostrý den = 27.5.).
-    // Reset cutoffStock — chovatel ho musí znova zadat / přepočítat z historie,
-    // protože stav skladu k ránu 27.5. se liší od stavu k ránu 23.5.
-    if (s.historyCutoff === '2026-05-22') {
-        s.historyCutoff = '2026-05-26';
-        s.cutoffStock = null;
-    }
-    // Fallback: pokud chybí cutoffStock, použij výchozí (nuly) — chovatel uvidí
-    // v Nastavení prázdná pole a doplní reálný stav.
-    if (s.historyCutoff && !s.cutoffStock) {
-        s.cutoffStock = { ...DEFAULT_SETTINGS.cutoffStock };
-    }
+    records = records.filter(r => r.date > cutoff);
+    delete settings.historyCutoff;
+    delete settings.cutoffStock;
+    saveToStorage();
 }
 
 function saveToStorage() {
@@ -1316,12 +1278,11 @@ function loadFromStorage() {
             settings = {
                 prices: { ...DEFAULT_SETTINGS.prices, ...(parsed.prices || {}) },
                 initialStock: { ...DEFAULT_SETTINGS.initialStock, ...(parsed.initialStock || {}) },
-                historyCutoff: parsed.historyCutoff ?? DEFAULT_SETTINGS.historyCutoff,
-                cutoffStock: parsed.cutoffStock ?? null
+                ...(parsed.historyCutoff ? { historyCutoff: parsed.historyCutoff, cutoffStock: parsed.cutoffStock ?? null } : {})
             };
         } catch (e) { /* keep defaults */ }
     }
-    _migrateSettings(settings);
+    _migrateToSimpleModel();
 }
 
 // ============================================================
@@ -1397,11 +1358,10 @@ async function cloudRestore() {
             settings = {
                 prices: { ...DEFAULT_SETTINGS.prices, ...(json.data.settings.prices || {}) },
                 initialStock: { ...DEFAULT_SETTINGS.initialStock, ...(json.data.settings.initialStock || {}) },
-                historyCutoff: json.data.settings.historyCutoff ?? DEFAULT_SETTINGS.historyCutoff,
-                cutoffStock: json.data.settings.cutoffStock ?? null
+                ...(json.data.settings.historyCutoff ? { historyCutoff: json.data.settings.historyCutoff, cutoffStock: json.data.settings.cutoffStock ?? null } : {})
             };
         }
-        _migrateSettings(settings);
+        _migrateToSimpleModel();
         safeSet(STORAGE_KEY, JSON.stringify(records));
         safeSet(SETTINGS_KEY, JSON.stringify(settings));
         safeSet(SYNC_TIMESTAMP_KEY, json.data.savedAt || new Date().toISOString());
@@ -1458,10 +1418,9 @@ async function autoSyncOnStartup() {
             settings = {
                 prices:        { ...DEFAULT_SETTINGS.prices,       ...(json.data.settings.prices       || {}) },
                 initialStock:  { ...DEFAULT_SETTINGS.initialStock, ...(json.data.settings.initialStock  || {}) },
-                historyCutoff: json.data.settings.historyCutoff ?? DEFAULT_SETTINGS.historyCutoff,
-                cutoffStock:   json.data.settings.cutoffStock   ?? null
+                ...(json.data.settings.historyCutoff ? { historyCutoff: json.data.settings.historyCutoff, cutoffStock: json.data.settings.cutoffStock ?? null } : {})
             };
-            _migrateSettings(settings);
+            _migrateToSimpleModel();
             safeSet(SETTINGS_KEY,  JSON.stringify(settings));
             safeSet(SETTINGS_TS_KEY, cloudSettingsTs);
         }
@@ -1551,50 +1510,11 @@ function updateUI() {
     const calculated = calculateBalances(records, settings.initialStock);
     const prices = settings.prices;
 
-    // Pro statistiky a validaci: jen ostrá data (po cutoffu)
-    const cutoff = settings.historyCutoff || '';
-    const cutoffStock = settings.cutoffStock || settings.initialStock;
-    const activeRecords = cutoff ? records.filter(r => r.date > cutoff) : records;
-    const activeCalculated = calculateBalances(activeRecords, cutoffStock);
-
-    // Override balance pro řádek s cutoff datem: tam jsou „papírová" historická
-    // data sloppy a balance vypočtený od initialStock+history často dává nesmysly
-    // (záporné hodnoty). Chovatel ručně zadal cutoffStock = stav skladu k ránu
-    // prvního ostrého dne (= k ránu 27.5. = k večeru 26.5. po normální evidenci),
-    // tak ten zobrazujeme jako balance na cutoff řádku. Od dalšího dne se balance
-    // počítá poctivě z activeCalculated (start = cutoffStock + ostré záznamy).
-    const balanceOverrides = new Map();
-    if (cutoff) {
-        balanceOverrides.set(cutoff, {
-            bal_slepM: cutoffStock.slepM, bal_slepV: cutoffStock.slepV,
-            bal_zelM:  cutoffStock.zelM,  bal_zelV:  cutoffStock.zelV,
-            bal_krep:  cutoffStock.krep,
-        });
-        for (const r of activeCalculated) {
-            balanceOverrides.set(r.date, {
-                bal_slepM: r.bal_slepM, bal_slepV: r.bal_slepV,
-                bal_zelM:  r.bal_zelM,  bal_zelV:  r.bal_zelV,
-                bal_krep:  r.bal_krep,
-            });
-        }
-    }
-
-    // Banner aktualizace
-    if (cutoff) {
-        const d = new Date(cutoff + 'T12:00:00');
-        d.setDate(d.getDate() + 1);
-        const activeFrom = d.toISOString().split('T')[0];
-        const bannerCutoff = document.getElementById('banner-cutoff-date');
-        const bannerFrom = document.getElementById('banner-active-from');
-        if (bannerCutoff) bannerCutoff.textContent = formatCzechDate(cutoff);
-        if (bannerFrom) bannerFrom.textContent = formatCzechDate(activeFrom);
-    }
-
-    // Souhrny — pouze z ostrých dat (volba A)
+    // Souhrny — ze všech záznamů
     let totalSneseno = { slepM: 0, slepV: 0, zelM: 0, zelV: 0, krep: 0 };
     let totalProdano = { slepM: 0, slepV: 0, zelM: 0, zelV: 0, krep: 0 };
     let totalRevenue = 0;
-    for (const r of activeCalculated) {
+    for (const r of calculated) {
         totalSneseno.slepM += r.slepM; totalSneseno.slepV += r.slepV;
         totalSneseno.zelM  += r.zelM;  totalSneseno.zelV  += r.zelV;
         totalSneseno.krep  += r.krep;
@@ -1604,10 +1524,11 @@ function updateUI() {
         totalRevenue += dailyRevenue(r, prices);
     }
 
-    const last = activeCalculated[activeCalculated.length - 1] || {
-        bal_slepM: cutoffStock.slepM, bal_slepV: cutoffStock.slepV,
-        bal_zelM: cutoffStock.zelM,   bal_zelV: cutoffStock.zelV,
-        bal_krep: cutoffStock.krep
+    const initStock = settings.initialStock;
+    const last = calculated[calculated.length - 1] || {
+        bal_slepM: initStock.slepM, bal_slepV: initStock.slepV,
+        bal_zelM: initStock.zelM,   bal_zelV: initStock.zelV,
+        bal_krep: initStock.krep
     };
     const lastStockValue = stockValue(last, prices);
 
@@ -1652,12 +1573,8 @@ function updateUI() {
     document.getElementById('card-kasa-detail').textContent =
         `Tržba: ${formatKc(totalRevenue)} | Sklad: ${formatKc(lastStockValue)}`;
 
-    // Filtrování pro tabulku — aplikuj balance overrides na cutoff a ostré řádky.
     const searchQuery = document.getElementById('search-input').value.toLowerCase();
-    let display = calculated.map(row => {
-        const ov = balanceOverrides.get(row.date);
-        return ov ? { ...row, ...ov } : row;
-    });
+    let display = [...calculated];
     if (activeMonthFilter !== 'all') {
         display = display.filter(r => r.date.startsWith(activeMonthFilter));
     }
@@ -1675,13 +1592,10 @@ function updateUI() {
     const todayStr = new Date().toISOString().split('T')[0];
     display.reverse().forEach(row => {
         const wk = isWeekend(row.date);
-        const isHistory = cutoff && row.date <= cutoff;
         const isToday = row.date === todayStr;
         const tr = document.createElement('tr');
         if (isToday) {
             tr.className = 'transition bg-amber-50 outline outline-2 outline-amber-400/60 outline-offset-[-2px]';
-        } else if (isHistory) {
-            tr.className = 'history-row transition';
         } else if (wk) {
             tr.className = 'weekend-row transition hover:bg-amber-100/80';
         } else {
@@ -1697,15 +1611,12 @@ function updateUI() {
 
         const dRev = dailyRevenue(row, prices);
         const sVal = stockValue(row, prices);
-        const histBadge = isHistory
-            ? '<span class="ml-1.5 text-[9px] bg-slate-300 text-slate-600 rounded px-1 font-bold uppercase tracking-wide align-middle">hist.</span>'
-            : '';
         const todayBadge = isToday
             ? '<span class="ml-1.5 text-[9px] bg-amber-500 text-white rounded px-1.5 py-0.5 font-black uppercase tracking-wide align-middle">Dnes</span>'
             : '';
 
         tr.innerHTML = `
-            <td class="py-3 px-4 font-bold text-slate-700">${formatCzechDate(row.date)}${histBadge}${todayBadge}</td>
+            <td class="py-3 px-4 font-bold text-slate-700">${formatCzechDate(row.date)}${todayBadge}</td>
             <td class="py-3 px-2 text-center bg-amber-50/30">${pairCell(row.slepM, row.slepV, 'font-bold text-amber-800')}</td>
             <td class="py-3 px-2 text-center bg-amber-50/30">${pairCell(row.zelM, row.zelV, 'font-bold text-emerald-700')}</td>
             <td class="py-3 px-2 text-center bg-amber-50/30 border-r border-slate-100 font-bold text-amber-700">${row.krep || '-'}</td>
@@ -1807,11 +1718,7 @@ function deleteRecord(date) {
     if (!confirm(`Opravdu si přeješ smazat záznam z ${formatCzechDate(date)}?`)) return;
     records = records.filter(r => r.date !== date);
 
-    // Kontrola záporných zůstatků po smazání — jen ostrá data
-    const _delCutoff = settings.historyCutoff || '';
-    const _delCutoffStock = settings.cutoffStock || settings.initialStock;
-    const _delActive = _delCutoff ? records.filter(r => r.date > _delCutoff) : records;
-    const calc = calculateBalances(_delActive, _delCutoffStock);
+    const calc = calculateBalances(records, settings.initialStock);
     const issues = findNegativeBalances(calc);
     if (issues.length > 0) {
         const list = issues.slice(0, 8).map(i => `  • ${i.label}: ${i.balance} ks dne ${formatCzechDate(i.date)}`).join('\n');
@@ -1870,11 +1777,7 @@ function handleFormSubmit(event) {
         tentative = [...records, newRec];
     }
 
-    // Kontrola záporných zůstatků — jen ostrá data
-    const _subCutoff = settings.historyCutoff || '';
-    const _subCutoffStock = settings.cutoffStock || settings.initialStock;
-    const _subActive = _subCutoff ? tentative.filter(r => r.date > _subCutoff) : tentative;
-    const calc = calculateBalances(_subActive, _subCutoffStock);
+    const calc = calculateBalances(tentative, settings.initialStock);
     const issues = findNegativeBalances(calc);
     if (issues.length > 0) {
         const list = issues.slice(0, 8).map(i => `  • ${i.label}: ${i.balance} ks dne ${formatCzechDate(i.date)}`).join('\n');
@@ -1895,34 +1798,14 @@ function handleFormSubmit(event) {
 // MODAL: NASTAVENÍ
 // ============================================================
 
-function _updateCutoffHint() {
-    const input = document.getElementById('set-cutoff-date');
-    const hint = document.getElementById('set-cutoff-hint');
-    if (!input || !hint) return;
-    const v = input.value;
-    if (!v) { hint.textContent = ''; return; }
-    const d = new Date(v);
-    if (Number.isNaN(d.getTime())) { hint.textContent = ''; return; }
-    d.setDate(d.getDate() + 1);
-    const fmt = d.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long', year: 'numeric' });
-    hint.textContent = `→ první ostrý den, který vstupuje do skladu: ${fmt}`;
-}
 
 function openSettings() {
     ['slepM','slepV','zelM','zelV','krep'].forEach(k => {
         document.getElementById(`set-price-${k}`).value = settings.prices[k];
+        document.getElementById(`set-init-${k}`).value = (settings.initialStock || {})[k] ?? 0;
     });
     const key = getCloudKey();
     if (key) document.getElementById('set-cloud-key').value = key;
-    // Uzávěrka historie
-    const cutoffInput = document.getElementById('set-cutoff-date');
-    cutoffInput.value = settings.historyCutoff || '';
-    _updateCutoffHint();
-    cutoffInput.oninput = _updateCutoffHint;
-    const cs = settings.cutoffStock || {};
-    ['slepM','slepV','zelM','zelV','krep'].forEach(k => {
-        document.getElementById(`set-cutoff-${k}`).value = cs[k] ?? '';
-    });
     document.getElementById('settings-modal').classList.remove('hidden');
 }
 
@@ -1931,16 +1814,13 @@ function closeSettings() {
 }
 
 function saveSettings() {
-    const newPrices = {}, newCutoffStock = {};
+    const newPrices = {}, newInit = {};
     for (const { key } of CATEGORIES) {
-        newPrices[key]      = parseFloat(document.getElementById(`set-price-${key}`).value) || 0;
-        newCutoffStock[key] = parseInt(document.getElementById(`set-cutoff-${key}`).value) || 0;
+        newPrices[key] = parseFloat(document.getElementById(`set-price-${key}`).value) || 0;
+        newInit[key]   = parseInt(document.getElementById(`set-init-${key}`).value) || 0;
     }
-    settings.prices        = newPrices;
-    // initialStock (=stav skladu k 31.12.) zůstává beze změny — slouží jen interně
-    // pro tlačítko „Přepočítat stav skladu z historie" (replay záznamů od počátku).
-    settings.historyCutoff = document.getElementById('set-cutoff-date').value || settings.historyCutoff;
-    settings.cutoffStock   = newCutoffStock;
+    settings.prices       = newPrices;
+    settings.initialStock = newInit;
 
     const keyInput = document.getElementById('set-cloud-key').value.trim();
     if (keyInput) setCloudKey(keyInput);
@@ -1958,15 +1838,6 @@ function saveSettings() {
     showToast('Nastavení uloženo', 'success');
 }
 
-function recalcCutoffStock() {
-    const cutoff = document.getElementById('set-cutoff-date').value || settings.historyCutoff;
-    if (!cutoff) { showToast('Nejprve zadejte datum uzávěrky', 'error'); return; }
-    const stock = computeStockAtDate(records, settings.initialStock, cutoff);
-    for (const { key } of CATEGORIES) {
-        document.getElementById(`set-cutoff-${key}`).value = stock[key];
-    }
-    showToast('Stav skladu přepočítán z historie', 'success');
-}
 
 // ============================================================
 // EXPORT / IMPORT
@@ -2021,13 +1892,10 @@ function importJSON(event) {
                 settings = {
                     prices: { ...DEFAULT_SETTINGS.prices, ...(parsed.settings.prices || {}) },
                     initialStock: { ...DEFAULT_SETTINGS.initialStock, ...(parsed.settings.initialStock || {}) },
-                    historyCutoff: parsed.settings.historyCutoff ?? DEFAULT_SETTINGS.historyCutoff,
-                    cutoffStock: parsed.settings.cutoffStock ?? null
+                    ...(parsed.settings.historyCutoff ? { historyCutoff: parsed.settings.historyCutoff, cutoffStock: parsed.settings.cutoffStock ?? null } : {})
                 };
             }
-            if (settings.historyCutoff && !settings.cutoffStock) {
-                settings.cutoffStock = computeStockAtDate(records, settings.initialStock, settings.historyCutoff);
-            }
+            _migrateToSimpleModel();
             saveToStorage();
             updateUI();
             renderMonthFilters();
@@ -2148,14 +2016,11 @@ function updateCharts() {
     _chartDonut = _destroyChart(_chartDonut);
     const ctxD = document.getElementById('chart-donut');
     if (ctxD) {
-        const cutoff      = settings.historyCutoff || '';
-        const cutoffStock = settings.cutoffStock || settings.initialStock;
-        const activeRecs  = cutoff ? records.filter(r => r.date > cutoff) : records;
-        const activeCalc  = calculateBalances(activeRecs, cutoffStock);
-        const lr = activeCalc[activeCalc.length - 1] || {
-            bal_slepM: cutoffStock.slepM, bal_slepV: cutoffStock.slepV,
-            bal_zelM:  cutoffStock.zelM,  bal_zelV:  cutoffStock.zelV,
-            bal_krep:  cutoffStock.krep
+        const initSt = settings.initialStock;
+        const lr = allCalc[allCalc.length - 1] || {
+            bal_slepM: initSt.slepM, bal_slepV: initSt.slepV,
+            bal_zelM:  initSt.zelM,  bal_zelV:  initSt.zelV,
+            bal_krep:  initSt.krep
         };
         const vals = [lr.bal_slepM, lr.bal_slepV, lr.bal_zelM, lr.bal_zelV, lr.bal_krep].map(v => Math.max(0, v));
         const total = vals.reduce((a, b) => a + b, 0);
@@ -3062,7 +2927,6 @@ window.importJSON = importJSON;
 window.manualSync = manualSync;
 window.manualRestore = manualRestore;
 window.updateUI = updateUI;
-window.recalcCutoffStock = recalcCutoffStock;
 window.toggleStats = toggleStats;
 window.dismissSetupBanner = dismissSetupBanner;
 window.stepVal = stepVal;
