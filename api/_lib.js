@@ -14,23 +14,16 @@ export function emptyStock() {
     return { ...DEFAULT_STOCK };
 }
 
-// Musí dávat STEJNÉ číslo, jako se zobrazuje v deníku v kartě "Aktuální sklad"
-// (index.html updateUI(), používá activeCalculated). Logika:
-//   start  = settings.cutoffStock (fallback settings.initialStock)
-//   sumuj  = records s date > settings.historyCutoff (fallback: všechny)
-//   stav   = start + Σ(snáška) - Σ(prodej)
+// stock = initialStock + Σ(snáška) - Σ(prodej) přes všechny záznamy.
+// cutoffStock jako fallback pro přechodné období (stará KV data).
 export function computeStockFromBlob(blob) {
     if (!blob || typeof blob !== 'object') return emptyStock();
     const settings = blob.settings || {};
     const start = {
         ...DEFAULT_STOCK,
-        ...(settings.cutoffStock || settings.initialStock || {}),
+        ...(settings.initialStock || settings.cutoffStock || {}),
     };
-    const cutoff = settings.historyCutoff || '';
-    const allRecords = Array.isArray(blob.records) ? blob.records : [];
-    const records = cutoff
-        ? allRecords.filter(r => r && typeof r.date === 'string' && r.date > cutoff)
-        : allRecords;
+    const records = Array.isArray(blob.records) ? blob.records : [];
 
     const balance = { ...start };
     for (const r of records) {
@@ -38,7 +31,6 @@ export function computeStockFromBlob(blob) {
             balance[k] += (Number(r[k]) || 0) - (Number(r[`sold_${k}`]) || 0);
         }
     }
-    // Záporné stavy nechejme projít — `available` se klampuje až výš v stock.js.
     return balance;
 }
 
