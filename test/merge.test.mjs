@@ -9,7 +9,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mergeData } from '../api/_merge.mjs';
+import { mergeData } from '../api/_merge.js';
 
 const NOW = '2026-05-31T12:00:00.000Z';
 const GOOD_SETTINGS = {

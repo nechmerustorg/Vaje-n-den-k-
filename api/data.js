@@ -3,7 +3,7 @@
 // Storage: Vercel KV (Upstash Redis pod kapotou).
 
 import { kv } from '@vercel/kv';
-import { mergeData } from './_merge.mjs';
+import { mergeData } from './_merge.js';
 
 const STORE_KEY = 'eggdiary:data';
 

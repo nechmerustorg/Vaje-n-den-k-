@@ -1,6 +1,11 @@
 // Authoritative, dependency-free merge for the cloud data blob.
 // Imported by /api/data. Kept pure (no KV, no Date) so it is unit-testable.
 //
+// CommonJS on purpose: Vercel transpiles the API functions to CommonJS, and a
+// `.mjs` (forced-ESM) module can't be require()'d from there (ERR_REQUIRE_ESM).
+// A plain CJS `.js` is require-able on Vercel AND importable from the .mjs tests
+// via Node's CJS named-export interop.
+//
 // The cloud is the source of truth, sliced into independent sections that each
 // carry their own "last modified" timestamp:
 //   - records  -> recordsSavedAt
@@ -41,7 +46,7 @@ function normalize(incoming, now) {
     return out;
 }
 
-export function mergeData(existing, incoming, now) {
+function mergeData(existing, incoming, now) {
     if (!incoming || typeof incoming !== 'object') {
         throw new Error('incoming must be an object');
     }
@@ -82,3 +87,5 @@ export function mergeData(existing, incoming, now) {
     merged.savedAt = newest(merged.recordsSavedAt, merged.settingsSavedAt) || existing.savedAt || now;
     return merged;
 }
+
+module.exports = { mergeData };

@@ -8,7 +8,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mergeData } from '../api/_merge.mjs';
+import { mergeData } from '../api/_merge.js';
 
 // In-memory stand-in for Vercel KV + /api/data POST.
 function makeCloud() {
