@@ -884,6 +884,13 @@
                     </div>
                 </div>
 
+                <!-- NEBEZPEČNÁ ZÓNA -->
+                <div>
+                    <h4 class="font-extrabold text-sm text-red-700 uppercase tracking-wider mb-3 border-b border-red-200 pb-1.5">Začít načisto</h4>
+                    <p class="text-xs text-slate-500 mb-3">Smaže všechny denní záznamy (i v cloudu). Počáteční sklad a ceny zůstanou. Hodí se na vyčištění historie před ostrým provozem.</p>
+                    <button type="button" onclick="clearAllRecords()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-1.5 px-3 rounded-lg text-xs transition">Vymazat všechny záznamy</button>
+                </div>
+
                 <div class="flex justify-end gap-3 pt-4 border-t">
                     <button type="button" onclick="closeSettings()" class="px-4 py-2 border rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-50">Zavřít</button>
                     <button type="button" onclick="saveSettings()" class="px-5 py-2 bg-amber-800 hover:bg-amber-950 text-white font-bold rounded-xl text-xs">Uložit nastavení</button>
@@ -941,159 +948,6 @@ const CATEGORIES = [
 const MONTH_NAMES = ['Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen',
                      'Červenec', 'Srpen', 'Září', 'Říjen', 'Listopad', 'Prosinec'];
 
-// ============================================================
-// SEED DATA (z původní evidence, ve staré struktuře — proběhne migrace)
-// ============================================================
-
-const SEED_RECORDS_OLD = [
-    // LEDEN
-    { date: '2026-01-01', colM: 1, colV: 14, colGR1: 0, colGR2: 0, colKc: 10, selM: 0, selV: 2, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-01-02', colM: 0, colV: 12, colGR1: 0, colGR2: 0, colKc: 10, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 1 },
-    { date: '2026-01-03', colM: 1, colV: 17, colGR1: 0, colGR2: 0, colKc: 9, selM: 0, selV: 70, selGR1: 0, selGR2: 0, selKc: 70 },
-    { date: '2026-01-04', colM: 1, colV: 12, colGR1: 0, colGR2: 0, colKc: 8, selM: 0, selV: 21, selGR1: 0, selGR2: 0, selKc: 1 },
-    { date: '2026-01-05', colM: 0, colV: 12, colGR1: 0, colGR2: 0, colKc: 9, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-01-06', colM: 3, colV: 13, colGR1: 0, colGR2: 0, colKc: 8, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-01-07', colM: 1, colV: 15, colGR1: 0, colGR2: 0, colKc: 10, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-01-08', colM: 1, colV: 12, colGR1: 0, colGR2: 0, colKc: 8, selM: 4, selV: 0, selGR1: 0, selGR2: 0, selKc: 1 },
-    { date: '2026-01-09', colM: 3, colV: 17, colGR1: 0, colGR2: 0, colKc: 7, selM: 0, selV: 20, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-01-10', colM: 2, colV: 21, colGR1: 0, colGR2: 0, colKc: 6, selM: 1, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-01-11', colM: 2, colV: 14, colGR1: 0, colGR2: 0, colKc: 7, selM: 0, selV: 21, selGR1: 0, selGR2: 0, selKc: 20 },
-    { date: '2026-01-12', colM: 2, colV: 20, colGR1: 0, colGR2: 0, colKc: 5, selM: 5, selV: 0, selGR1: 0, selGR2: 0, selKc: 1 },
-    { date: '2026-01-13', colM: 1, colV: 21, colGR1: 0, colGR2: 0, colKc: 2, selM: 2, selV: 0, selGR1: 0, selGR2: 0, selKc: 1 },
-    { date: '2026-01-14', colM: 0, colV: 19, colGR1: 0, colGR2: 0, colKc: 4, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-01-15', colM: 5, colV: 15, colGR1: 0, colGR2: 0, colKc: 5, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-01-16', colM: 3, colV: 17, colGR1: 0, colGR2: 0, colKc: 4, selM: 4, selV: 60, selGR1: 0, selGR2: 0, selKc: 40 },
-    { date: '2026-01-17', colM: 4, colV: 10, colGR1: 0, colGR2: 0, colKc: 5, selM: 9, selV: 100, selGR1: 0, selGR2: 0, selKc: 60 },
-    { date: '2026-01-18', colM: 1, colV: 29, colGR1: 0, colGR2: 0, colKc: 3, selM: 4, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-01-19', colM: 2, colV: 13, colGR1: 0, colGR2: 0, colKc: 3, selM: 1, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-01-20', colM: 0, colV: 17, colGR1: 0, colGR2: 0, colKc: 2, selM: 0, selV: 51, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-01-21', colM: 4, colV: 17, colGR1: 0, colGR2: 0, colKc: 3, selM: 0, selV: 31, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-01-22', colM: 4, colV: 18, colGR1: 0, colGR2: 0, colKc: 2, selM: 5, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-01-23', colM: 1, colV: 16, colGR1: 0, colGR2: 0, colKc: 2, selM: 5, selV: 21, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-01-24', colM: 0, colV: 21, colGR1: 0, colGR2: 0, colKc: 2, selM: 3, selV: 2, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-01-25', colM: 1, colV: 11, colGR1: 0, colGR2: 0, colKc: 2, selM: 0, selV: 50, selGR1: 0, selGR2: 0, selKc: 20 },
-    { date: '2026-01-26', colM: 5, colV: 21, colGR1: 0, colGR2: 0, colKc: 1, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-01-27', colM: 1, colV: 17, colGR1: 0, colGR2: 0, colKc: 3, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-01-28', colM: 4, colV: 22, colGR1: 0, colGR2: 0, colKc: 1, selM: 1, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-01-29', colM: 2, colV: 20, colGR1: 0, colGR2: 0, colKc: 2, selM: 1, selV: 2, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-01-30', colM: 5, colV: 20, colGR1: 0, colGR2: 0, colKc: 2, selM: 0, selV: 60, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-01-31', colM: 4, colV: 17, colGR1: 0, colGR2: 0, colKc: 2, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    // ÚNOR
-    { date: '2026-02-01', colM: 4, colV: 17, colGR1: 0, colGR2: 0, colKc: 2, selM: 1, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-02-02', colM: 3, colV: 19, colGR1: 0, colGR2: 0, colKc: 3, selM: 10, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-02-03', colM: 1, colV: 23, colGR1: 0, colGR2: 0, colKc: 2, selM: 0, selV: 2, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-02-04', colM: 5, colV: 17, colGR1: 0, colGR2: 0, colKc: 4, selM: 2, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-02-05', colM: 3, colV: 24, colGR1: 0, colGR2: 0, colKc: 4, selM: 10, selV: 21, selGR1: 0, selGR2: 0, selKc: 20 },
-    { date: '2026-02-06', colM: 3, colV: 19, colGR1: 0, colGR2: 0, colKc: 6, selM: 0, selV: 120, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-02-07', colM: 7, colV: 23, colGR1: 0, colGR2: 0, colKc: 2, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-02-08', colM: 0, colV: 26, colGR1: 0, colGR2: 0, colKc: 3, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-02-09', colM: 3, colV: 21, colGR1: 0, colGR2: 0, colKc: 3, selM: 3, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-02-10', colM: 4, colV: 17, colGR1: 0, colGR2: 0, colKc: 4, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-02-11', colM: 2, colV: 26, colGR1: 0, colGR2: 0, colKc: 3, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-02-12', colM: 4, colV: 17, colGR1: 0, colGR2: 0, colKc: 4, selM: 12, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-02-13', colM: 0, colV: 22, colGR1: 0, colGR2: 0, colKc: 3, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-02-14', colM: 1, colV: 13, colGR1: 0, colGR2: 0, colKc: 3, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-02-15', colM: 2, colV: 14, colGR1: 0, colGR2: 0, colKc: 3, selM: 0, selV: 21, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-02-16', colM: 1, colV: 14, colGR1: 0, colGR2: 0, colKc: 2, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-02-17', colM: 1, colV: 14, colGR1: 0, colGR2: 0, colKc: 4, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-02-18', colM: 2, colV: 10, colGR1: 0, colGR2: 0, colKc: 2, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-02-19', colM: 2, colV: 13, colGR1: 0, colGR2: 0, colKc: 4, selM: 0, selV: 181, selGR1: 0, selGR2: 0, selKc: 40 },
-    { date: '2026-02-20', colM: 2, colV: 11, colGR1: 0, colGR2: 0, colKc: 2, selM: 0, selV: 40, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-02-21', colM: 2, colV: 11, colGR1: 0, colGR2: 0, colKc: 3, selM: 1, selV: 11, selGR1: 0, selGR2: 0, selKc: 1 },
-    { date: '2026-02-22', colM: 2, colV: 9, colGR1: 0, colGR2: 0, colKc: 3, selM: 33, selV: 28, selGR1: 0, selGR2: 0, selKc: 19 },
-    { date: '2026-02-23', colM: 1, colV: 11, colGR1: 0, colGR2: 0, colKc: 2, selM: 2, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-02-24', colM: 2, colV: 11, colGR1: 0, colGR2: 0, colKc: 3, selM: 1, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-02-25', colM: 2, colV: 14, colGR1: 0, colGR2: 0, colKc: 3, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 1 },
-    { date: '2026-02-26', colM: 2, colV: 15, colGR1: 0, colGR2: 0, colKc: 3, selM: 0, selV: 60, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-02-27', colM: 6, colV: 18, colGR1: 0, colGR2: 0, colKc: 2, selM: 10, selV: 11, selGR1: 0, selGR2: 0, selKc: 1 },
-    { date: '2026-02-28', colM: 3, colV: 22, colGR1: 0, colGR2: 0, colKc: 1, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 1 },
-    // BŘEZEN
-    { date: '2026-03-01', colM: 5, colV: 29, colGR1: 0, colGR2: 0, colKc: 0, selM: 10, selV: 20, selGR1: 0, selGR2: 0, selKc: 10 },
-    { date: '2026-03-02', colM: 6, colV: 28, colGR1: 0, colGR2: 0, colKc: 1, selM: 2, selV: 30, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-03-03', colM: 1, colV: 34, colGR1: 0, colGR2: 0, colKc: 0, selM: 2, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-03-04', colM: 9, colV: 42, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-03-05', colM: 3, colV: 37, colGR1: 0, colGR2: 0, colKc: 0, selM: 2, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-03-06', colM: 7, colV: 39, colGR1: 0, colGR2: 0, colKc: 0, selM: 2, selV: 111, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-03-07', colM: 6, colV: 33, colGR1: 0, colGR2: 0, colKc: 0, selM: 13, selV: 20, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-03-08', colM: 5, colV: 40, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-03-09', colM: 3, colV: 37, colGR1: 0, colGR2: 0, colKc: 0, selM: 1, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-03-10', colM: 6, colV: 26, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-03-11', colM: 4, colV: 33, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 30, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-03-12', colM: 3, colV: 28, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-03-13', colM: 5, colV: 34, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 61, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-03-14', colM: 4, colV: 30, colGR1: 0, colGR2: 0, colKc: 0, selM: 40, selV: 220, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-03-15', colM: 3, colV: 33, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 20, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-03-16', colM: 6, colV: 29, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 30, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-03-17', colM: 1, colV: 39, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 2, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-03-18', colM: 5, colV: 40, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 2, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-03-19', colM: 5, colV: 33, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 31, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-03-20', colM: 6, colV: 38, colGR1: 0, colGR2: 0, colKc: 0, selM: 20, selV: 111, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-03-21', colM: 6, colV: 44, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 2 },
-    { date: '2026-03-22', colM: 5, colV: 31, colGR1: 0, colGR2: 0, colKc: 0, selM: 14, selV: 20, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-03-23', colM: 5, colV: 36, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 2, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-03-24', colM: 2, colV: 33, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-03-25', colM: 7, colV: 45, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 2, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-03-26', colM: 1, colV: 36, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 140, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-03-27', colM: 4, colV: 38, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-03-28', colM: 5, colV: 44, colGR1: 0, colGR2: 0, colKc: 0, selM: 10, selV: 2, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-03-29', colM: 3, colV: 32, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-03-30', colM: 2, colV: 42, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 30, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-03-31', colM: 5, colV: 34, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    // DUBEN
-    { date: '2026-04-01', colM: 4, colV: 32, colGR1: 0, colGR2: 0, colKc: 0, selM: 10, selV: 120, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-04-02', colM: 5, colV: 36, colGR1: 0, colGR2: 0, colKc: 0, selM: 20, selV: 150, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-04-03', colM: 2, colV: 38, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 30, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-04-04', colM: 4, colV: 31, colGR1: 0, colGR2: 0, colKc: 0, selM: 1, selV: 41, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-04-05', colM: 4, colV: 46, colGR1: 0, colGR2: 0, colKc: 0, selM: 10, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-04-06', colM: 5, colV: 39, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 81, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-04-07', colM: 6, colV: 44, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 30, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-04-08', colM: 4, colV: 38, colGR1: 0, colGR2: 0, colKc: 0, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-04-09', colM: 4, colV: 39, colGR1: 0, colGR2: 0, colKc: 1, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-04-10', colM: 3, colV: 50, colGR1: 1, colGR2: 0, colKc: 1, selM: 0, selV: 2, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-04-11', colM: 2, colV: 38, colGR1: 0, colGR2: 0, colKc: 1, selM: 0, selV: 91, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-04-12', colM: 2, colV: 33, colGR1: 1, colGR2: 0, colKc: 1, selM: 10, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-04-13', colM: 5, colV: 38, colGR1: 1, colGR2: 0, colKc: 2, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 1 },
-    { date: '2026-04-14', colM: 1, colV: 30, colGR1: 0, colGR2: 0, colKc: 1, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-04-15', colM: 5, colV: 35, colGR1: 3, colGR2: 1, colKc: 3, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-04-16', colM: 5, colV: 29, colGR1: 1, colGR2: 1, colKc: 1, selM: 0, selV: 2, selGR1: 1, selGR2: 0, selKc: 0 },
-    { date: '2026-04-17', colM: 2, colV: 30, colGR1: 1, colGR2: 1, colKc: 2, selM: 1, selV: 250, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-04-18', colM: 3, colV: 38, colGR1: 2, colGR2: 0, colKc: 2, selM: 40, selV: 100, selGR1: 0, selGR2: 0, selKc: 12 },
-    { date: '2026-04-19', colM: 3, colV: 27, colGR1: 2, colGR2: 1, colKc: 5, selM: 0, selV: 2, selGR1: 1, selGR2: 0, selKc: 1 },
-    { date: '2026-04-20', colM: 2, colV: 37, colGR1: 1, colGR2: 2, colKc: 4, selM: 0, selV: 2, selGR1: 1, selGR2: 0, selKc: 0 },
-    { date: '2026-04-21', colM: 0, colV: 39, colGR1: 1, colGR2: 1, colKc: 4, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-04-22', colM: 4, colV: 35, colGR1: 2, colGR2: 0, colKc: 3, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-04-23', colM: 0, colV: 42, colGR1: 2, colGR2: 0, colKc: 4, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-04-24', colM: 1, colV: 37, colGR1: 1, colGR2: 1, colKc: 5, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-04-25', colM: 4, colV: 37, colGR1: 2, colGR2: 1, colKc: 5, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-04-26', colM: 2, colV: 29, colGR1: 1, colGR2: 0, colKc: 4, selM: 0, selV: 30, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-04-27', colM: 4, colV: 38, colGR1: 1, colGR2: 1, colKc: 6, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 20 },
-    { date: '2026-04-28', colM: 3, colV: 28, colGR1: 1, colGR2: 0, colKc: 5, selM: 3, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-04-29', colM: 3, colV: 32, colGR1: 0, colGR2: 0, colKc: 7, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-04-30', colM: 1, colV: 21, colGR1: 1, colGR2: 1, colKc: 4, selM: 10, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    // KVĚTEN
-    { date: '2026-05-01', colM: 1, colV: 28, colGR1: 1, colGR2: 0, colKc: 6, selM: 0, selV: 70, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-05-02', colM: 2, colV: 30, colGR1: 1, colGR2: 0, colKc: 6, selM: 17, selV: 320, selGR1: 10, selGR2: 0, selKc: 20 },
-    { date: '2026-05-03', colM: 3, colV: 21, colGR1: 1, colGR2: 0, colKc: 5, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-05-04', colM: 6, colV: 35, colGR1: 0, colGR2: 0, colKc: 10, selM: 0, selV: 9, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-05-05', colM: 2, colV: 25, colGR1: 1, colGR2: 0, colKc: 5, selM: 0, selV: 60, selGR1: 0, selGR2: 0, selKc: 40 },
-    { date: '2026-05-06', colM: 5, colV: 34, colGR1: 1, colGR2: 0, colKc: 6, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-05-07', colM: 4, colV: 35, colGR1: 1, colGR2: 0, colKc: 4, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-05-08', colM: 4, colV: 38, colGR1: 1, colGR2: 0, colKc: 6, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-05-09', colM: 5, colV: 37, colGR1: 0, colGR2: 0, colKc: 5, selM: 0, selV: 3, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-05-10', colM: 4, colV: 44, colGR1: 1, colGR2: 0, colKc: 6, selM: 50, selV: 231, selGR1: 10, selGR2: 0, selKc: 30 },
-    { date: '2026-05-11', colM: 6, colV: 39, colGR1: 1, colGR2: 0, colKc: 5, selM: 3, selV: 12, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-05-12', colM: 6, colV: 43, colGR1: 1, colGR2: 0, colKc: 6, selM: 0, selV: 3, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-05-13', colM: 7, colV: 40, colGR1: 1, colGR2: 1, colKc: 5, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 1 },
-    { date: '2026-05-14', colM: 1, colV: 36, colGR1: 2, colGR2: 0, colKc: 5, selM: 0, selV: 3, selGR1: 0, selGR2: 6, selKc: 0 },
-    { date: '2026-05-15', colM: 3, colV: 37, colGR1: 3, colGR2: 0, colKc: 4, selM: 0, selV: 61, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-05-16', colM: 7, colV: 33, colGR1: 3, colGR2: 0, colKc: 4, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-05-17', colM: 2, colV: 32, colGR1: 4, colGR2: 0, colKc: 4, selM: 0, selV: 23, selGR1: 0, selGR2: 0, selKc: 1 },
-    { date: '2026-05-18', colM: 5, colV: 21, colGR1: 1, colGR2: 1, colKc: 6, selM: 0, selV: 2, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-05-19', colM: 1, colV: 38, colGR1: 3, colGR2: 0, colKc: 4, selM: 0, selV: 1, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-05-20', colM: 2, colV: 30, colGR1: 4, colGR2: 0, colKc: 2, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 },
-    { date: '2026-05-21', colM: 1, colV: 21, colGR1: 1, colGR2: 0, colKc: 4, selM: 0, selV: 230, selGR1: 0, selGR2: 0, selKc: 50 },
-    { date: '2026-05-22', colM: 4, colV: 23, colGR1: 3, colGR2: 0, colKc: 2, selM: 0, selV: 0, selGR1: 0, selGR2: 0, selKc: 0 }
-];
 
 // ============================================================
 // MIGRACE
@@ -1116,14 +970,6 @@ function migrateRecord(r) {
     };
 }
 
-const SEED_RECORDS = [
-    ...SEED_RECORDS_OLD.map(migrateRecord),
-    // Ostrá evidence od 25.5.2026 (přepsáno z papíru, zadáno ručně)
-    { date: '2026-05-25', slepM: 4, slepV: 18, zelM: 4, zelV: 0, krep: 1,
-      sold_slepM: 0, sold_slepV: 5, sold_zelM: 9, sold_zelV: 0, sold_krep: 0 },
-    { date: '2026-05-26', slepM: 0, slepV: 20, zelM: 3, zelV: 0, krep: 1,
-      sold_slepM: 0, sold_slepV: 0, sold_zelM: 0, sold_zelV: 0, sold_krep: 0 }
-];
 
 // ============================================================
 // STORAGE
@@ -1149,6 +995,7 @@ let records = [];
 let settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
 let activeMonthFilter = 'all';
 let syncTimeout = null;
+let _adopting = false; // true během přebírání cloud dat → cloudSync se nesmí re-entrovat
 
 // ============================================================
 // VÝPOČTY
@@ -1253,6 +1100,7 @@ function _migrateToSimpleModel() {
 function saveToStorage() {
     safeSet(STORAGE_KEY, JSON.stringify(records));
     safeSet(SETTINGS_KEY, JSON.stringify(settings));
+    safeSet(SYNC_TIMESTAMP_KEY, new Date().toISOString()); // záznamy se právě změnily → push vyhraje merge
     cloudSync(); // okamžitý push — zásoby v KV musí být aktuální pro /api/reserve
 }
 
@@ -1262,14 +1110,16 @@ function loadFromStorage() {
     // Migrace ze starého klíče v3
     const legacyV3 = safeGet('egg_tracker_v3_data');
 
+    // Žádná seed data: prázdný start. Záznamy přibývají ručně den po dni,
+    // sklad k dnešku je v Nastavení (initialStock). Co se smaže, se nevrací.
     if (rawRecords) {
         try { records = JSON.parse(rawRecords).map(migrateRecord); }
-        catch (e) { records = [...SEED_RECORDS]; }
+        catch (e) { records = []; }
     } else if (legacyV3) {
         try { records = JSON.parse(legacyV3).map(migrateRecord); }
-        catch (e) { records = [...SEED_RECORDS]; }
+        catch (e) { records = []; }
     } else {
-        records = [...SEED_RECORDS];
+        records = [];
     }
 
     if (rawSettings) {
@@ -1318,20 +1168,62 @@ function scheduleCloudSync() {
     syncTimeout = setTimeout(cloudSync, 3000);
 }
 
+// Převezme autoritativní cloud blob do lokálního stavu. Bez force se každá sekce
+// (records / settings) přepíše jen pokud je v cloudu NOVĚJŠÍ než lokálně — tím se
+// nepřepíšou rozdělané lokální změny. force=true = tvrdé stažení („Stáhnout z cloudu").
+// Nevolá cloudSync (běží zevnitř něj) — chrání _adopting flag.
+function adoptCloud(d, force = false) {
+    if (!d) return false;
+    let changed = false;
+    _adopting = true;
+    try {
+        const localR = safeGet(SYNC_TIMESTAMP_KEY);
+        const cloudR = d.recordsSavedAt || d.savedAt || null;
+        if (force || (cloudR && (!localR || cloudR > localR))) {
+            records = (d.records || []).map(migrateRecord);
+            safeSet(STORAGE_KEY, JSON.stringify(records));
+            if (cloudR) safeSet(SYNC_TIMESTAMP_KEY, cloudR);
+            changed = true;
+        }
+        const localS = safeGet(SETTINGS_TS_KEY);
+        const cloudS = d.settingsSavedAt || d.savedAt || null;
+        if (d.settings && (force || (cloudS && (!localS || cloudS > localS)))) {
+            settings = {
+                prices:       { ...DEFAULT_SETTINGS.prices,       ...(d.settings.prices       || {}) },
+                initialStock: { ...DEFAULT_SETTINGS.initialStock, ...(d.settings.initialStock || {}) },
+                ...(d.settings.historyCutoff ? { historyCutoff: d.settings.historyCutoff, cutoffStock: d.settings.cutoffStock ?? null } : {})
+            };
+            safeSet(SETTINGS_KEY, JSON.stringify(settings));
+            if (cloudS) safeSet(SETTINGS_TS_KEY, cloudS);
+            changed = true;
+        }
+        if (changed) _migrateToSimpleModel();
+    } finally {
+        _adopting = false;
+    }
+    if (changed) { updateUI(); renderMonthFilters(); }
+    return changed;
+}
+
 async function cloudSync() {
     const key = getCloudKey();
-    if (!key) return;
+    if (!key || _adopting) return;
     try {
-        const savedAt = new Date().toISOString();
-        const settingsSavedAt = safeGet(SETTINGS_TS_KEY) || savedAt;
+        // Honest „naposledy změněno" razítka. null = „nemám názor" → server ponechá
+        // novější cloud verzi. Zastaralý/defaultní push tak NIKDY nepřepíše dobrá data.
+        const recordsSavedAt  = safeGet(SYNC_TIMESTAMP_KEY) || null;
+        const settingsSavedAt = safeGet(SETTINGS_TS_KEY)    || null;
         const res = await fetch(`/api/data?key=${encodeURIComponent(key)}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ records, settings, savedAt, settingsSavedAt })
+            body: JSON.stringify({ records, settings, recordsSavedAt, settingsSavedAt })
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json().catch(() => null);
+        // Server vrací autoritativní merge → srovnáme se s ním (proběhne i „pull"
+        // novějších sekcí, které máme staré). Jeden push = i reconcile.
+        if (json && json.data) adoptCloud(json.data);
         updateSyncIndicator('synced');
-        safeSet(SYNC_TIMESTAMP_KEY, savedAt);
     } catch (e) {
         updateSyncIndicator('error');
         console.error('Cloud sync error:', e);
@@ -1353,21 +1245,7 @@ async function cloudRestore() {
             return;
         }
         if (!confirm('Tímto přepíšete aktuální data zálohou z cloudu. Pokračovat?')) return;
-        records = (json.data.records || []).map(migrateRecord);
-        if (json.data.settings) {
-            settings = {
-                prices: { ...DEFAULT_SETTINGS.prices, ...(json.data.settings.prices || {}) },
-                initialStock: { ...DEFAULT_SETTINGS.initialStock, ...(json.data.settings.initialStock || {}) },
-                ...(json.data.settings.historyCutoff ? { historyCutoff: json.data.settings.historyCutoff, cutoffStock: json.data.settings.cutoffStock ?? null } : {})
-            };
-        }
-        _migrateToSimpleModel();
-        safeSet(STORAGE_KEY, JSON.stringify(records));
-        safeSet(SETTINGS_KEY, JSON.stringify(settings));
-        safeSet(SYNC_TIMESTAMP_KEY, json.data.savedAt || new Date().toISOString());
-        safeSet(SETTINGS_TS_KEY, json.data.settingsSavedAt || json.data.savedAt || new Date().toISOString());
-        updateUI();
-        renderMonthFilters();
+        adoptCloud(json.data, true); // tvrdé stažení cloudu přes lokál
         showToast('Data úspěšně načtena z cloudu', 'success');
     } catch (e) {
         showToast('Chyba při načítání: ' + e.message, 'error');
@@ -1377,78 +1255,12 @@ async function cloudRestore() {
 async function autoSyncOnStartup() {
     const key = getCloudKey();
     if (!key) { _showSetupBanner(); return; }
-
-    try {
-        updateSyncIndicator('pending');
-        const res = await fetch(`/api/data?key=${encodeURIComponent(key)}`);
-        if (!res.ok) { updateSyncIndicator('error'); return; }
-        const json = await res.json();
-
-        if (!json.data || !(json.data.records?.length)) {
-            // Cloud prázdný → push lokálních dat (první spuštění na novém deploymentu)
-            await cloudSync();
-            return;
-        }
-
-        const cloudTs = json.data.savedAt;
-        const localTs = safeGet(SYNC_TIMESTAMP_KEY);
-        const isFresh = !safeGet(STORAGE_KEY); // nový prohlížeč, ještě nebylo nic uloženo
-
-        // Timestamps pro records a settings jsou nezávislé
-        const cloudSettingsTs = json.data.settingsSavedAt || json.data.savedAt;
-        const localSettingsTs = safeGet(SETTINGS_TS_KEY);
-        const shouldPullSettings = isFresh || !localSettingsTs || cloudSettingsTs > localSettingsTs;
-
-        // Rozhodnutí pull vs push se dělá ZVLÁŠŤ pro records a pro settings —
-        // nastavení (zvlášť ceny) mají vlastní timestamp a mohou se měnit
-        // nezávisle na záznamech (chovatel upraví ceny na zařízení A, ale ten den
-        // nezapíše žádný záznam → cloudTs records není novější než lokální B,
-        // ale cloudSettingsTs ano → ceny se musí stejně natáhnout).
-        const shouldPullRecords = isFresh || (cloudTs && (!localTs || cloudTs > localTs));
-        const cloudHasSettings = !!json.data.settings;
-        const settingsPulled = shouldPullSettings && cloudHasSettings;
-
-        if (shouldPullRecords) {
-            records = (json.data.records || []).map(migrateRecord);
-            safeSet(STORAGE_KEY,        JSON.stringify(records));
-            safeSet(SYNC_TIMESTAMP_KEY, cloudTs || new Date().toISOString());
-        }
-
-        if (settingsPulled) {
-            settings = {
-                prices:        { ...DEFAULT_SETTINGS.prices,       ...(json.data.settings.prices       || {}) },
-                initialStock:  { ...DEFAULT_SETTINGS.initialStock, ...(json.data.settings.initialStock  || {}) },
-                ...(json.data.settings.historyCutoff ? { historyCutoff: json.data.settings.historyCutoff, cutoffStock: json.data.settings.cutoffStock ?? null } : {})
-            };
-            _migrateToSimpleModel();
-            safeSet(SETTINGS_KEY,  JSON.stringify(settings));
-            safeSet(SETTINGS_TS_KEY, cloudSettingsTs);
-        }
-
-        if (shouldPullRecords || settingsPulled) {
-            updateUI();
-            renderMonthFilters();
-            updateSyncIndicator('synced');
-            if (!isFresh) {
-                const what = shouldPullRecords && settingsPulled ? 'data + nastavení'
-                    : shouldPullRecords ? 'záznamy'
-                    : 'nastavení (ceny)';
-                showToast(`☁️ Načteno novější ${what} z cloudu`, 'info');
-            }
-        }
-
-        // Pokud cokoliv lokálního zůstává novější (records NEBO settings), pushneme
-        // celý balík do cloudu. cloudSync pošle (records, settings, savedAt,
-        // settingsSavedAt) — settingsSavedAt = SETTINGS_TS_KEY, kterou jsme buď
-        // ponechali (lokál novější) nebo přepsali cloudovou hodnotou (lokál staršÍ).
-        if (!shouldPullRecords || !settingsPulled) {
-            updateSyncIndicator('synced');
-            cloudSync();
-        }
-    } catch (e) {
-        updateSyncIndicator('error');
-        console.warn('Auto-sync startup failed:', e.message);
-    }
+    updateSyncIndicator('pending');
+    // Jediná bezpečná cesta pro start: pushneme lokál s honest razítky, server
+    // autoritativně sloučí a vrátí pravdu, kterou převezmeme. Tím proběhne pull
+    // novějších sekcí i push lokálně novějších — bez větve „prázdný cloud = přepiš",
+    // která dřív křísila smazané záznamy a mazala uložené nastavení.
+    await cloudSync();
 }
 
 function _showSetupBanner() {
@@ -1737,6 +1549,23 @@ function deleteRecord(date) {
     renderMonthFilters();
 }
 
+// Vymaže VŠECHNY záznamy a začne načisto. Nastavení (sklad + ceny) zůstává.
+// saveToStorage posune razítko záznamů na teď → prázdný stav autoritativně
+// přepíše cloud (i historii z jiných zařízení), nic se nevrátí.
+function clearAllRecords() {
+    if (records.length === 0) {
+        showToast('Žádné záznamy k smazání', 'info');
+        return;
+    }
+    if (!confirm(`Opravdu smazat VŠECHNY záznamy (${records.length})?\n\nTato akce je nevratná a propíše se i do cloudu. Nastavení (počáteční sklad a ceny) zůstane zachováno.`)) return;
+    if (!confirm('Poslední kontrola: smazat veškerou historii a začít načisto?')) return;
+    records = [];
+    saveToStorage();
+    updateUI();
+    renderMonthFilters();
+    showToast('Všechny záznamy smazány — jedeš načisto', 'success');
+}
+
 function handleFormSubmit(event) {
     event.preventDefault();
     const originalDate = document.getElementById('edit-original-date').value;
@@ -1813,24 +1642,30 @@ function closeSettings() {
     document.getElementById('settings-modal').classList.add('hidden');
 }
 
+function _sameStock(a, b) {
+    return CATEGORIES.every(({ key }) => (Number(a?.[key]) || 0) === (Number(b?.[key]) || 0));
+}
+
 function saveSettings() {
     const newPrices = {}, newInit = {};
     for (const { key } of CATEGORIES) {
         newPrices[key] = parseFloat(document.getElementById(`set-price-${key}`).value) || 0;
         newInit[key]   = parseInt(document.getElementById(`set-init-${key}`).value) || 0;
     }
+    const changed = !_sameStock(newPrices, settings.prices) || !_sameStock(newInit, settings.initialStock);
     settings.prices       = newPrices;
     settings.initialStock = newInit;
 
     const keyInput = document.getElementById('set-cloud-key').value.trim();
     if (keyInput) setCloudKey(keyInput);
 
-    // Zaznamenat timestamp nastavení HNED — než přijde jakýkoliv cloud pull
-    safeSet(SETTINGS_TS_KEY, new Date().toISOString());
+    // Razítko nastavení posuneme JEN při skutečné změně. Pouhé zadání cloud klíče
+    // není změna → push s null razítkem nepřepíše dobré cloud nastavení, naopak si
+    // ho stáhne (cloudSync převezme autoritativní merge ze serveru).
+    if (changed) safeSet(SETTINGS_TS_KEY, new Date().toISOString());
     safeSet(SETTINGS_KEY, JSON.stringify(settings));
     safeSet(STORAGE_KEY, JSON.stringify(records));
 
-    // Okamžitý push do cloudu (ne debounced) — nastavení musí dorazit spolehlivě
     cloudSync();
 
     closeSettings();
@@ -2916,6 +2751,7 @@ window.openAddModal = openAddModal;
 window.closeAddModal = closeAddModal;
 window.editRecord = editRecord;
 window.deleteRecord = deleteRecord;
+window.clearAllRecords = clearAllRecords;
 window.handleFormSubmit = handleFormSubmit;
 window.openSettings = openSettings;
 window.closeSettings = closeSettings;

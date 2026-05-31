@@ -3,6 +3,7 @@
 // Storage: Vercel KV (Upstash Redis pod kapotou).
 
 import { kv } from '@vercel/kv';
+import { mergeData } from './_merge.mjs';
 
 const STORE_KEY = 'eggdiary:data';
 
@@ -30,8 +31,12 @@ export default async function handler(req, res) {
             if (!body || typeof body !== 'object') {
                 return res.status(400).json({ error: 'Neplatné tělo požadavku' });
             }
-            await kv.set(STORE_KEY, body);
-            return res.status(200).json({ ok: true, savedAt: new Date().toISOString() });
+            // Per-sekční merge: starší/„beznázorový" push nikdy nepřepíše novější
+            // cloud data. Server je autorita → klientský bug nemůže smazat data.
+            const existing = await kv.get(STORE_KEY);
+            const merged = mergeData(existing, body, new Date().toISOString());
+            await kv.set(STORE_KEY, merged);
+            return res.status(200).json({ ok: true, data: merged });
         }
 
         return res.status(405).json({ error: 'Method not allowed' });

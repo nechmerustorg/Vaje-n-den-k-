@@ -5,7 +5,8 @@
   "description": "Evidence snášky a prodeje vajec - Nech mě růst",
   "scripts": {
     "dev": "vercel dev",
-    "deploy": "vercel --prod"
+    "deploy": "vercel --prod",
+    "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
     "@vercel/functions": "^3.6.1",
