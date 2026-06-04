@@ -56,27 +56,34 @@ git push -u origin main
 - Pojmenuj např. `vajecny-denik-kv`, vyber region (Frankfurt/Stockholm pro EU).
 - Vercel automaticky doplní env proměnné `KV_*` do projektu.
 
-### 4. Nastav přístupový klíč
+### 4. Nastav heslo pro přístup
 
-V **Project Settings → Environment Variables** přidej:
+Aplikace je za **přihlašovací obrazovkou** — bez hesla se deník neukáže. Heslo je
+proměnná `ACCESS_KEY`. V **Project Settings → Environment Variables** přidej:
 
 ```
-ACCESS_KEY = <vygenerovaný náhodný řetězec>
+ACCESS_KEY = <heslo, které budeš sdílet>
 ```
 
-Doporučená délka: 32+ znaků. Vygenerovat můžeš třeba:
+Zvol si vlastní heslo, nebo vygeneruj náhodné (`openssl rand -hex 24`). Toto heslo
+pak **pošleš tomu, kdo má mít do deníku přístup** — zadá ho jednou na přihlašovací
+obrazovce a jeho prohlížeč si ho zapamatuje.
 
-```bash
-openssl rand -hex 24
-```
+> Heslo měníš/odebíráš kdykoli na Vercelu (úprava `ACCESS_KEY` + **Redeploy**).
+> Po změně se budou muset všichni přihlásit znovu. Bez nastaveného `ACCESS_KEY`
+> se nepřihlásí nikdo (přihlášení hlásí „Přístup zatím není nastavený").
 
-Po přidání proměnné spusť **Redeploy** v dashboardu (jinak se proměnná nepropíše).
+Po přidání/změně proměnné spusť **Redeploy** v dashboardu (jinak se nepropíše).
 
-### 5. Aktivuj cloud sync v aplikaci
+### 5. Přihlášení a cloud sync
 
-Otevři nasazenou aplikaci → **Nastavení** → vlož stejný `ACCESS_KEY` do pole *Přístupový klíč* → **Uložit nastavení**.
+Otevři nasazenou aplikaci → objeví se **přihlašovací obrazovka** → zadej `ACCESS_KEY`
+jako heslo → **Přihlásit se**.
 
-Od té chvíle se každá změna automaticky synchronizuje. Indikátor v hlavičce ukazuje stav (`offline`, `syncing…`, `synced`, `sync error`).
+Od té chvíle se každá změna automaticky synchronizuje a heslo zůstane uložené v tomto
+prohlížeči (příště už se přihlašovat nemusíš). Indikátor v hlavičce ukazuje stav
+(`offline`, `syncing…`, `synced`, `sync error`). Odhlásit se můžeš v **Nastavení →
+Odhlásit se** (smaže uložené heslo z prohlížeče).
 
 ## Lokální vývoj
 
@@ -101,7 +108,22 @@ Vercel Hobby + KV (Upstash):
 
 ## Bezpečnost
 
-Aplikace používá jednoduchý sdílený tajný klíč pro autorizaci API požadavků. Pro osobní/interní use case je to dostatečné. Pokud bys chtěl víceuživatelský přístup, je potřeba přidat skutečnou autentikaci (např. Clerk, Auth.js, nebo magic link).
+Přístup do deníku chrání **heslo** (`ACCESS_KEY`). Při otevření aplikace se ukáže
+přihlašovací obrazovka a heslo se **ověřuje na serveru** (endpoint `/api/data` vrací
+`401` na špatné heslo). Veškerá data deníku žijí v KV za tímto heslem, takže je bez
+přihlášení nelze stáhnout.
+
+Je to jedno sdílené heslo pro všechny, kdo ho dostanou — pro osobní/interní use case
+to bohatě stačí. Pár poznámek:
+
+- Sama stránka (HTML/JS) je statická a veřejně stažitelná; přihlašovací overlay je
+  vstupní brána pro běžné použití. Technicky zdatný člověk může overlay v prohlížeči
+  obejít, ale uvidí jen **prázdnou aplikaci** — žádná reálná data, protože ta jsou za
+  serverovým ověřením hesla.
+- Chceš-li tvrdě zablokovat i přístup k samotné stránce, použij placenou
+  **Deployment Protection** na Vercelu (Pro plán).
+- Pro víceuživatelský přístup s vlastními účty by se hodila plnohodnotná autentikace
+  (Clerk, Auth.js, magic link).
 
 **Neukládej `ACCESS_KEY` do gitu.** Slouží k tomu env proměnné na Vercel + lokální `.env.local` (oba jsou v `.gitignore`).
 
